@@ -8,6 +8,7 @@ import type { FixtureResolution } from "@fanguard/polymarket";
 import { quoteCover, type CoverQuote } from "@fanguard/pricing";
 
 import { Button } from "~/components/ui/button";
+import { PayPremium } from "~/components/checkout/pay-premium";
 
 const TEST_MESSAGE = "Welcome to Fanguard — sign to prove this wallet is yours.";
 
@@ -93,6 +94,10 @@ function CheckoutInner() {
         <DynamicWidget />
       </div>
 
+      {team && quote.state === "done" && (
+        <PayPremium premium={quote.quote.premium} team={team} matchup={matchup} />
+      )}
+
       <WalletPanel />
     </main>
   );
@@ -147,7 +152,7 @@ function CoverSummary({
             </span>
           </div>
           <p className="text-muted-foreground text-xs">
-            Payment lands next — Dynamic Flow settles your premium in USDC on Polygon.
+            Pay below — Dynamic Flow settles your premium in USDC on Polygon.
           </p>
         </>
       )}
