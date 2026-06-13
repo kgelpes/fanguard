@@ -183,6 +183,21 @@ interface DetectDocument {
   querySelectorAll(selectors: string): ArrayLike<{ textContent: string | null }>;
   querySelector(selectors: string): DetectElement | null;
   title: string;
+  body?: { textContent: string | null } | null;
+}
+
+/**
+ * The checkout order summary has no structured price, so read the "Total price"
+ * label off the rendered text. Anchoring to that label (rather than the largest
+ * dollar amount) avoids the struck-through pre-discount price and per-ticket
+ * line items.
+ */
+export function detectCheckoutPrice(doc: DetectDocument): number | null {
+  const text = doc.body?.textContent ?? "";
+  const match = text.match(/total\s*price[\s\S]{0,40}?\$\s*([\d,]+(?:\.\d{2})?)/i);
+  if (!match?.[1]) return null;
+  const value = Number.parseFloat(match[1].replace(/,/g, ""));
+  return Number.isFinite(value) && value > 0 ? value : null;
 }
 
 /** Read and JSON-parse every `application/ld+json` block, skipping malformed ones. */
@@ -219,7 +234,7 @@ function detectFromEventLink(doc: DetectDocument): DetectedEvent | null {
     venue: null,
     eventId: extractEventId(href),
     url: href,
-    priceUsd: null,
+    priceUsd: detectCheckoutPrice(doc),
     source: "title",
     confidence: "low",
   };
@@ -261,7 +276,7 @@ export function detectEvent(doc: DetectDocument): DetectedEvent | null {
     venue: null,
     eventId: extractEventId(eventHref),
     url: null,
-    priceUsd: null,
+    priceUsd: detectCheckoutPrice(doc),
     source,
     confidence: "low",
   };
