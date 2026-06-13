@@ -18,6 +18,14 @@ const nextConfig: NextConfig = {
   // Internal workspace packages ship TypeScript source (no build step), so Next
   // must transpile them.
   transpilePackages: ["@fanguard/polymarket", "@fanguard/pricing"],
+  // The Polymarket trading SDKs are Node-only (ethers/axios, CJS) and used solely
+  // in server routes (the hedge desk). Keep them external so they're required at
+  // runtime instead of bundled for the browser/edge.
+  serverExternalPackages: [
+    "@polymarket/clob-client-v2",
+    "@polymarket/builder-relayer-client",
+    "@polymarket/builder-signing-sdk",
+  ],
 };
 
 export default nextConfig;

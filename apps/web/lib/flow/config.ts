@@ -9,14 +9,30 @@ export const FLOW_API_BASE = "https://app.dynamicauth.com/api/v0";
 export const POLYGON_CHAIN_ID = "137";
 export const FLOW_CHAIN_NAME = "EVM";
 
-// Native USDC on Polygon (6 decimals). It's both our settlement token AND the
-// token the fan pays with by default — same chain, same token, so Flow builds a
-// direct transfer (no swap/bridge). Flow still accepts any token/chain a fan
-// holds; this is just the default `fromToken` for the embedded wallet.
+// Native USDC on Polygon (6 decimals). The default token the fan PAYS with —
+// the embedded wallet holds it, and a fan paying native USDC on Polygon needs
+// no swap on the source side. Flow still accepts any token/chain a fan holds.
 // EIP-55 checksummed — Dynamic's Flow API rejects mixed-case addresses whose
 // checksum doesn't verify (422). Keep this exact casing.
 export const POLYGON_USDC = "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359";
 export const USDC_DECIMALS = 6;
+
+// Bridged USDC.e on Polygon. We SETTLE the premium in USDC.e (not native USDC)
+// because Polymarket's pUSD collateral on-ramp only accepts USDC.e — settling
+// here lets the hedge wallet wrap straight to pUSD with no extra swap. Flow
+// routes whatever the fan pays into this token. See `reference-polymarket-v2-pusd`.
+// EIP-55 checksummed (verified via `cast to-check-sum-address`).
+export const POLYGON_USDC_E = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
+
+// What the checkout settles into and deposits to the settlement address.
+export const SETTLEMENT_TOKEN = {
+  chainName: FLOW_CHAIN_NAME,
+  chainId: POLYGON_CHAIN_ID,
+  address: POLYGON_USDC_E,
+  symbol: "USDC.e",
+  decimals: USDC_DECIMALS,
+  isNative: false,
+} as const;
 
 // Where settled USDC lands. Treasury wallet for v1; swap to the CoverPool
 // contract address when it ships (Phase 3). Overridable via FLOW_SETTLEMENT_ADDRESS.

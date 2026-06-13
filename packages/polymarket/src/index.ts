@@ -67,3 +67,45 @@ export type { ParsedFixture } from "./fixture";
 export type { GammaClientOptions, GammaEvent, GammaMarket } from "./gamma";
 export type { BuildCombosOptions } from "./spreads";
 export type { SpreadLeg, ComboLeg, BlowoutCombo, FixtureResolution } from "./types";
+
+// Order placement (CLOB, V2 / pUSD). See ./onchain for on-chain prerequisites.
+export {
+  createClobClient,
+  placeLimitOrder,
+  placeMarketOrder,
+  CLOB_HOST,
+  Side,
+  OrderType,
+  SignatureTypeV2,
+} from "./clob";
+export type {
+  ClobSession,
+  CreateClobClientOptions,
+  LimitOrderInput,
+  MarketOrderInput,
+  ApiKeyCreds,
+} from "./clob";
+export {
+  getClients,
+  getBalances,
+  ensureTradingApprovals,
+  wrapToPusd,
+  formatUnits6,
+  parseUnits6,
+  PUSD,
+  USDC_E,
+  USDC_NATIVE,
+  COLLATERAL_ONRAMP,
+  CONDITIONAL_TOKENS,
+  SPENDERS,
+  DEFAULT_POLYGON_RPC,
+} from "./onchain";
+export type { Clients, Balances, ApprovalResult } from "./onchain";
+export {
+  makeRelayClient,
+  ensureDepositWallet,
+  approveDepositWallet,
+  buildApprovalCalls,
+  RELAYER_URL,
+} from "./deposit-wallet";
+export type { RelaySession } from "./deposit-wallet";
