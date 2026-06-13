@@ -65,6 +65,9 @@ importers:
 
   apps/extension:
     dependencies:
+      '@fanguard/polymarket':
+        specifier: workspace:*
+        version: link:../../packages/polymarket
       '@radix-ui/react-slot':
         specifier: 'catalog:'
         version: 1.2.5(@types/react@19.2.17)(react@19.2.7)
