@@ -9,9 +9,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@dynamic-labs/ethereum": "^4.88.5",
+    "@dynamic-labs/sdk-react-core": "^4.88.5",
+    "@dynamic-labs/wagmi-connector": "^4.88.5",
     "@fanguard/polymarket": "workspace:*",
+    "@fanguard/pricing": "workspace:*",
     "@radix-ui/react-slot": "catalog:",
     "@t3-oss/env-nextjs": "0.13.11",
+    "@tanstack/react-query": "^5.101.0",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "lucide-react": "catalog:",
@@ -19,6 +24,8 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "tailwind-merge": "catalog:",
+    "viem": "^2.52.2",
+    "wagmi": "^3.6.16",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import type { BlowoutCombo, FixtureResolution } from "@fanguard/polymarket";
 
 import { Button } from "~/components/ui/button";
@@ -98,12 +99,12 @@ export function FixtureLookup() {
         </p>
       )}
 
-      {status.state === "done" && <ResolutionView data={status.data} />}
+      {status.state === "done" && <ResolutionView data={status.data} shutout={shutout} />}
     </div>
   );
 }
 
-function ResolutionView({ data }: { data: FixtureResolution }) {
+function ResolutionView({ data, shutout }: { data: FixtureResolution; shutout: boolean }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-card text-card-foreground rounded-lg border p-4">
@@ -124,14 +125,29 @@ function ResolutionView({ data }: { data: FixtureResolution }) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         {data.combos.map((combo) => (
-          <ComboCard key={combo.team} combo={combo} />
+          <ComboCard key={combo.team} combo={combo} query={data.query.raw} shutout={shutout} />
         ))}
       </div>
     </div>
   );
 }
 
-function ComboCard({ combo }: { combo: BlowoutCombo }) {
+function ComboCard({
+  combo,
+  query,
+  shutout,
+}: {
+  combo: BlowoutCombo;
+  query: string;
+  shutout: boolean;
+}) {
+  // This card is "{combo.team} win big" — the blowout a {combo.opponent} fan
+  // fears. So the cover is bought by the opponent's fan; pass that team to
+  // checkout so it can price the right trigger.
+  const params = new URLSearchParams({ q: query, team: combo.opponent });
+  if (shutout) params.set("shutout", "1");
+  const coverHref = `/checkout?${params.toString()}`;
+
   return (
     <div className="bg-card text-card-foreground flex flex-col gap-3 rounded-lg border p-4">
       <div>
@@ -159,6 +175,10 @@ function ComboCard({ combo }: { combo: BlowoutCombo }) {
           {formatPercent(combo.blowoutProbability)} · {combo.comboMultiplier.toFixed(1)}×
         </span>
       </div>
+
+      <Button asChild className="w-full">
+        <Link href={coverHref}>Cover {combo.opponent}</Link>
+      </Button>
     </div>
   );
 }
