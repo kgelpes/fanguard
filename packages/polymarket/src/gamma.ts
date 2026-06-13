@@ -88,11 +88,17 @@ export class GammaClient {
 
   constructor(options: GammaClientOptions = {}) {
     this.baseUrl = (options.baseUrl ?? GAMMA_BASE_URL).replace(/\/$/, "");
-    this.fetchImpl = options.fetch ?? globalThis.fetch;
-    this.timeoutMs = options.timeoutMs ?? 8000;
-    if (!this.fetchImpl) {
+    // Bind the default `fetch` to `globalThis`: a service worker (where the
+    // extension's background runs) throws "Illegal invocation" if the global
+    // `fetch` is called as a method off any other object.
+    const baseFetch =
+      options.fetch ??
+      (typeof globalThis.fetch === "function" ? globalThis.fetch.bind(globalThis) : undefined);
+    if (!baseFetch) {
       throw new GammaApiError("No fetch implementation available; pass one via options.fetch");
     }
+    this.fetchImpl = baseFetch;
+    this.timeoutMs = options.timeoutMs ?? 8000;
   }
 
   private async getJson(path: string, params: Record<string, string | number | boolean>) {
