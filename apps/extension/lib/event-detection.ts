@@ -200,6 +200,22 @@ export function detectCheckoutPrice(doc: DetectDocument): number | null {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
+/**
+ * The overlay is a checkout-time upsell — "insure your night" only makes sense
+ * once the fan is buying a ticket. Event/listing pages carry the same JSON-LD we
+ * detect from, so without this gate the card pops up while someone is merely
+ * browsing. StubHub's purchase flow lives under a `checkout` host or path
+ * segment; match either so we stay out of the way everywhere else.
+ */
+export function isCheckoutUrl(url: string): boolean {
+  try {
+    const { hostname, pathname } = new URL(url);
+    return /(^|\.)checkout\./i.test(hostname) || /(^|\/)checkout(\/|$)/i.test(pathname);
+  } catch {
+    return false;
+  }
+}
+
 /** Read and JSON-parse every `application/ld+json` block, skipping malformed ones. */
 export function readJsonLdBlocks(doc: DetectDocument): unknown[] {
   const blocks: unknown[] = [];
