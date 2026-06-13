@@ -14,6 +14,12 @@ export const env = createEnv({
     FLOW_SETTLEMENT_ADDRESS: z.string().optional(),
     // Reuse a pre-created Flow checkout id (skips create-on-first-payment).
     FLOW_CHECKOUT_ID: z.string().optional(),
+    // Hedge desk: private key of the wallet that places the Polymarket hedge
+    // (server-only). Its deposit wallet must be set up + funded with pUSD via
+    // `packages/polymarket` scripts. The /api/hedge route 501s without it.
+    HEDGE_PRIVATE_KEY: z.string().optional(),
+    // Polygon RPC for the hedge route. Defaults to a public endpoint.
+    POLYGON_RPC_URL: z.string().url().optional(),
   },
   client: {
     // Must be prefixed with NEXT_PUBLIC_ to be exposed to the browser.
@@ -33,6 +39,8 @@ export const env = createEnv({
     DYNAMIC_API_TOKEN: process.env.DYNAMIC_API_TOKEN,
     FLOW_SETTLEMENT_ADDRESS: process.env.FLOW_SETTLEMENT_ADDRESS,
     FLOW_CHECKOUT_ID: process.env.FLOW_CHECKOUT_ID,
+    HEDGE_PRIVATE_KEY: process.env.HEDGE_PRIVATE_KEY,
+    POLYGON_RPC_URL: process.env.POLYGON_RPC_URL,
   },
   emptyStringAsUndefined: true,
   // Set SKIP_ENV_VALIDATION=1 to skip (e.g. in Docker builds).

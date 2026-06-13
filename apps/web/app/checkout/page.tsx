@@ -9,6 +9,7 @@ import { quoteCover, type CoverQuote } from "@fanguard/pricing";
 
 import { Button } from "~/components/ui/button";
 import { PayPremium } from "~/components/checkout/pay-premium";
+import { HedgeDesk } from "~/components/checkout/hedge-desk";
 
 const TEST_MESSAGE = "Welcome to Fanguard — sign to prove this wallet is yours.";
 
@@ -42,6 +43,8 @@ function CheckoutInner() {
   const shutout = searchParams.get("shutout");
 
   const [quote, setQuote] = React.useState<QuoteState>({ state: "idle" });
+  // Bumped when the premium settles — auto-runs the hedge desk.
+  const [hedgeTrigger, setHedgeTrigger] = React.useState(0);
 
   // Re-resolve the fixture at checkout time (fresh odds) and price the cover.
   React.useEffect(() => {
@@ -95,7 +98,21 @@ function CheckoutInner() {
       </div>
 
       {team && quote.state === "done" && (
-        <PayPremium premium={quote.quote.premium} team={team} matchup={matchup} />
+        <PayPremium
+          premium={quote.quote.premium}
+          team={team}
+          matchup={matchup}
+          onSettled={() => setHedgeTrigger((n) => n + 1)}
+        />
+      )}
+
+      {team && quote.state === "done" && (
+        <HedgeDesk
+          team={team}
+          matchup={matchup}
+          shutout={Boolean(shutout)}
+          trigger={hedgeTrigger}
+        />
       )}
 
       <WalletPanel />

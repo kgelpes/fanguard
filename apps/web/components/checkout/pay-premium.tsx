@@ -33,13 +33,26 @@ export function PayPremium({
   premium,
   team,
   matchup,
+  onSettled,
 }: {
   premium: number;
   team: string;
   matchup: string | null;
+  /** Fires once when the premium has settled — the cue to take the hedge. */
+  onSettled?: () => void;
 }) {
   const { isConnected } = useAccount();
   const { status, quote, txHash, error, pay, reset } = useFlowPayment();
+
+  // Hand off to the hedge desk exactly once, when settlement completes.
+  const settledRef = React.useRef(false);
+  React.useEffect(() => {
+    if (status === "completed" && !settledRef.current) {
+      settledRef.current = true;
+      onSettled?.();
+    }
+    if (status === "idle") settledRef.current = false;
+  }, [status, onSettled]);
 
   // What the fan pays WITH. Flow swaps/bridges it to the settlement USDC on
   // Polygon — "any token, any chain" in, one token out.

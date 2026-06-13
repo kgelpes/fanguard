@@ -9,7 +9,7 @@ import {
   FLOW_CHAIN_NAME,
   POLYGON_CHAIN_ID,
   POLYGON_USDC,
-  USDC_DECIMALS,
+  SETTLEMENT_TOKEN,
 } from "./config";
 import type { EvmSigningPayload, FlowQuote, FlowTransaction } from "./types";
 
@@ -121,7 +121,7 @@ function safeJson(text: string): unknown {
 }
 
 // ── Step 1: Checkout (reusable config) ──────────────────────────────────────
-// A checkout encodes "settle USDC on Polygon → our treasury". It's static, so
+// A checkout encodes "settle USDC.e on Polygon → our hedge wallet". It's static, so
 // we create it once and cache the id for the life of the server process. Set
 // FLOW_CHECKOUT_ID to reuse one created out-of-band (e.g. via curl) and skip creation.
 let cachedCheckoutId: string | null = null;
@@ -141,12 +141,12 @@ export async function ensureCheckout(): Promise<string> {
           strategy: "cheapest",
           settlements: [
             {
-              chainName: FLOW_CHAIN_NAME,
-              chainId: POLYGON_CHAIN_ID,
-              tokenAddress: checksum(POLYGON_USDC, "settlement token"),
-              symbol: "USDC",
-              tokenDecimals: USDC_DECIMALS,
-              isNative: false,
+              chainName: SETTLEMENT_TOKEN.chainName,
+              chainId: SETTLEMENT_TOKEN.chainId,
+              tokenAddress: checksum(SETTLEMENT_TOKEN.address, "settlement token"),
+              symbol: SETTLEMENT_TOKEN.symbol,
+              tokenDecimals: SETTLEMENT_TOKEN.decimals,
+              isNative: SETTLEMENT_TOKEN.isNative,
             },
           ],
         },

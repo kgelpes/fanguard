@@ -8,12 +8,23 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "status": "tsx scripts/status.ts",
+    "setup": "tsx scripts/setup.ts",
+    "place-order": "tsx scripts/place-order.ts",
+    "flow-fund": "tsx scripts/flow-fund.ts",
+    "deposit-setup": "tsx scripts/deposit-setup.ts",
     "clean": "rm -rf .turbo node_modules"
   },
   "dependencies": {
+    "@polymarket/builder-relayer-client": "^0.0.10",
+    "@polymarket/builder-signing-sdk": "^0.0.8",
+    "@polymarket/clob-client-v2": "^1.0.6",
+    "viem": "^2.52.2",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "dotenv": "^16.4.7",
+    "tsx": "^4.19.2",
     "typescript": "catalog:"
   }
 }
