@@ -10,10 +10,13 @@ export const env = createEnv({
   client: {
     // Must be prefixed with NEXT_PUBLIC_ to be exposed to the browser.
     NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+    // Dynamic embedded-wallet environment ID (app.dynamic.xyz → Developers → Overview).
+    NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID: z.string().min(1),
   },
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID: process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID,
   },
   emptyStringAsUndefined: true,
   // Set SKIP_ENV_VALIDATION=1 to skip (e.g. in Docker builds).

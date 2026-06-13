@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
   turbopack: { root: workspaceRoot },
   // Internal workspace packages ship TypeScript source (no build step), so Next
   // must transpile them.
-  transpilePackages: ["@fanguard/polymarket"],
+  transpilePackages: ["@fanguard/polymarket", "@fanguard/pricing"],
 };
 
 export default nextConfig;
