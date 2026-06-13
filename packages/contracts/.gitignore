@@ -1,0 +1,6 @@
+out/
+cache/
+.env
+
+# Keep deploy receipts in git, drop simulation noise.
+broadcast/**/dry-run/

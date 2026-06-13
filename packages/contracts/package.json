@@ -1,0 +1,11 @@
+{
+  "name": "@fanguard/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Foundry contracts for FanGuard (Polygon).",
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "deploy:polygon": "forge script script/HelloWorld.s.sol --rpc-url polygon --broadcast"
+  }
+}
