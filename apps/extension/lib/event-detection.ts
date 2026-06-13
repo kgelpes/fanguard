@@ -174,9 +174,14 @@ export function parseTitle(title: string): { name: string; startDate: string | n
   return { name, startDate };
 }
 
+interface DetectElement {
+  getAttribute(name: string): string | null;
+  textContent: string | null;
+}
+
 interface DetectDocument {
   querySelectorAll(selectors: string): ArrayLike<{ textContent: string | null }>;
-  querySelector(selectors: string): { getAttribute(name: string): string | null } | null;
+  querySelector(selectors: string): DetectElement | null;
   title: string;
 }
 
@@ -197,16 +202,40 @@ export function readJsonLdBlocks(doc: DetectDocument): unknown[] {
 }
 
 /**
- * Detect the event a StubHub page is showing. Tries JSON-LD first, then the
- * `<title>` (enriched with the `<meta name="description">` date when missing),
- * and finally the `/event/{id}/` link in the DOM for the event id.
+ * The checkout host carries no JSON-LD and its `<title>` may lag behind the SPA,
+ * but the header keeps the event title as a link to `/event/{id}/`. Read the
+ * matchup straight off that anchor.
+ */
+function detectFromEventLink(doc: DetectDocument): DetectedEvent | null {
+  const anchor = doc.querySelector('a[href*="/event/"]');
+  if (!anchor) return null;
+  const text = (anchor.textContent ?? "").trim();
+  if (!text || !/\bvs\.?\b/i.test(text)) return null;
+  const href = anchor.getAttribute("href");
+  return {
+    name: text,
+    ...splitTeams(text),
+    startDate: null,
+    venue: null,
+    eventId: extractEventId(href),
+    url: href,
+    priceUsd: null,
+    source: "title",
+    confidence: "low",
+  };
+}
+
+/**
+ * Detect the event a StubHub page is showing. Tries JSON-LD first (event pages),
+ * then the `<title>` (enriched with the `<meta name="description">` date), and
+ * finally the `/event/{id}/` header link (checkout pages, which lack JSON-LD).
  */
 export function detectEvent(doc: DetectDocument): DetectedEvent | null {
   const fromJsonLd = parseEventFromJsonLd(readJsonLdBlocks(doc));
   if (fromJsonLd) return fromJsonLd;
 
   const fromTitle = parseTitle(doc.title);
-  if (!fromTitle) return null;
+  if (!fromTitle) return detectFromEventLink(doc);
 
   let startDate = fromTitle.startDate;
   let source: DetectionSource = "title";
