@@ -8,6 +8,10 @@ import {
   resolveFixture,
 } from "@fanguard/polymarket";
 
+// Pin to Dublin (Ireland) — this route calls the Polymarket Gamma API, which is
+// geofenced away from US regions (Vercel defaults to iad1). See vercel.json.
+export const preferredRegion = "dub1";
+
 /**
  * GET /api/fixtures?q=Brazil%20vs%20Morocco[&shutout=1]
  *
