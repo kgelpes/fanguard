@@ -13,7 +13,9 @@ export default defineConfig({
     name: "Fanguard",
     description: "Polymarket odds overlay for live event pages.",
     permissions: ["storage"],
-    host_permissions: ["*://*.stubhub.com/*"],
+    // stubhub: read the event page. gamma: the background worker resolves the
+    // blowout combo against Polymarket from here (bypasses page CORS).
+    host_permissions: ["*://*.stubhub.com/*", "*://gamma-api.polymarket.com/*"],
   },
   vite: () => ({
     plugins: [babel({ presets: [reactCompilerPreset()] }), tailwindcss()],

@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fanguard/polymarket": "workspace:*",
     "@radix-ui/react-slot": "catalog:",
     "@t3-oss/env-nextjs": "0.13.11",
     "class-variance-authority": "catalog:",
