@@ -109,30 +109,69 @@ function CoverOffer({
   data: Extract<ResolveFixtureResponse, { ok: true }>["data"];
   payout: number;
 }) {
-  // Probability that the night gets ruined: either side runs away with it.
-  // The two per-team blowouts are ~mutually exclusive, so we sum them.
-  const pBlowout = Math.min(
-    0.95,
-    data.combos.reduce((sum, c) => sum + c.blowoutProbability, 0),
-  );
-  if (pBlowout <= 0) {
+  const [myTeam, setMyTeam] = useState<string | null>(null);
+
+  if (data.combos.length === 0) {
     return <p className="text-muted-foreground text-sm">No blowout market for this game.</p>;
   }
 
+  // Both team names, derived from either combo (team + its opponent).
+  const teams = [data.combos[0]!.team, data.combos[0]!.opponent];
+
+  // Step 1: which team is the fan here for?
+  if (!myTeam) {
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="text-sm font-semibold">Who are you here for?</p>
+        <div className="flex gap-2">
+          {teams.map((team) => (
+            <Button
+              key={team}
+              size="sm"
+              variant="outline"
+              className="flex-1"
+              onClick={() => setMyTeam(team)}
+            >
+              {team}
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Step 2: cover priced to MY team getting blown out — i.e. the opponent
+  // running away with it (the combo whose opponent is my team).
+  const triggerCombo = data.combos.find((c) => c.opponent === myTeam);
+  if (!triggerCombo) {
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="text-muted-foreground text-sm">
+          No blowout line to cover {myTeam} on this game.
+        </p>
+        <button className="text-muted-foreground text-xs underline" onClick={() => setMyTeam(null)}>
+          Pick a different team
+        </button>
+      </div>
+    );
+  }
+
+  const pBlowout = Math.min(0.95, triggerCombo.blowoutProbability);
   const premium = Math.max(MIN_PREMIUM, pBlowout * payout * MARKUP);
-  const teams = data.combos.map((c) => c.team);
-  const trigger =
-    teams.length === 2
-      ? `Pays out if ${teams[0]} or ${teams[1]} gets blown out.`
-      : `Pays out if ${teams[0] ?? "your team"} gets blown out.`;
 
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm font-semibold">Protect your {formatUsd(payout)} night</p>
-      <p className="text-muted-foreground text-xs">{trigger}</p>
+      <p className="text-muted-foreground text-xs">Pays out if {myTeam} gets blown out.</p>
       <Button className="mt-1 w-full" size="sm">
         Add cover · {formatUsd(premium)}
       </Button>
+      <button
+        className="text-muted-foreground self-start text-xs underline"
+        onClick={() => setMyTeam(null)}
+      >
+        Not your team? Change
+      </button>
     </div>
   );
 }
