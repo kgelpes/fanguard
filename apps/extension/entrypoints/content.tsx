@@ -1,37 +1,52 @@
 import { createRoot } from "react-dom/client";
 
 import { Overlay } from "~/components/overlay";
-import { detectEvent, type DetectedEvent } from "~/lib/event-detection";
+import { detectEvent, isCheckoutUrl, type DetectedEvent } from "~/lib/event-detection";
 import "~/assets/tailwind.css";
 
-const RETRY_INTERVAL_MS = 600;
+const THROTTLE_MS = 600;
 const MAX_WAIT_MS = 20_000;
 
 /**
- * Event pages are server-rendered (JSON-LD is in the initial HTML), but the
- * checkout host is a client-rendered SPA whose title/header land after load.
- * Poll detection until it succeeds or we give up, so the overlay appears on
- * both. Resolves null if the page never reveals a fixture.
+ * The overlay is a checkout-only upsell, so we only detect once the fan is in
+ * the purchase flow — never on event/listing pages. The checkout host is a
+ * client-rendered SPA whose title/header land after load (and a soft navigation
+ * may carry us into it after the script runs), so we can't rely on a single
+ * read. Rather than blind-poll (each `detectEvent` re-parses JSON-LD and scans
+ * the whole page text), react to DOM mutations: idle pages cost nothing, and a
+ * hydrating checkout is only scanned when it actually changes — throttled so a
+ * render storm can't trigger a flood of full-page reads. Resolves null on
+ * timeout or when we're never carried into a recognizable checkout.
  */
-function waitForEvent(ctx: {
+function waitForCheckoutEvent(ctx: {
   onInvalidated?: (cb: () => void) => void;
 }): Promise<DetectedEvent | null> {
+  const detect = () =>
+    isCheckoutUrl(window.location.href) ? detectEvent(document) : null;
+
   return new Promise((resolve) => {
-    const immediate = detectEvent(document);
+    const immediate = detect();
     if (immediate) return resolve(immediate);
 
-    const started = Date.now();
-    const interval = setInterval(() => {
-      const event = detectEvent(document);
-      if (event) return finish(event);
-      if (Date.now() - started >= MAX_WAIT_MS) finish(null);
-    }, RETRY_INTERVAL_MS);
-
     const finish = (value: DetectedEvent | null) => {
-      clearInterval(interval);
+      observer.disconnect();
+      clearTimeout(deadline);
       resolve(value);
     };
 
+    let throttled = false;
+    const observer = new MutationObserver(() => {
+      if (throttled) return;
+      throttled = true;
+      setTimeout(() => {
+        throttled = false;
+        const event = detect();
+        if (event) finish(event);
+      }, THROTTLE_MS);
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+
+    const deadline = setTimeout(() => finish(null), MAX_WAIT_MS);
     ctx.onInvalidated?.(() => finish(null));
   });
 }
@@ -40,9 +55,10 @@ export default defineContentScript({
   matches: ["*://*.stubhub.com/*"],
   cssInjectionMode: "ui",
   async main(ctx) {
-    // FAN-6: read the event straight from the page's structured data. If this
-    // isn't a recognizable event page, stay out of the way entirely.
-    const event = await waitForEvent(ctx);
+    // FAN-6: read the event straight from the page's structured data, but only
+    // once the fan reaches checkout. If we're not at checkout with a recognizable
+    // fixture, stay out of the way entirely.
+    const event = await waitForCheckoutEvent(ctx);
     if (!event) return;
 
     const ui = await createShadowRootUi(ctx, {
