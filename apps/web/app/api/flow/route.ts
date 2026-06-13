@@ -9,6 +9,11 @@ import {
   startPayment,
 } from "~/lib/flow/server";
 
+// Pin to Dublin (Ireland), consistent with the Polymarket routes — keeps all
+// server-side checkout traffic out of US regions (Vercel defaults to iad1).
+// See vercel.json for the project-wide default.
+export const preferredRegion = "dub1";
+
 /**
  * POST /api/flow — server-side proxy for the Fireblocks Flow checkout API.
  *

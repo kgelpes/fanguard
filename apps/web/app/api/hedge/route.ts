@@ -5,6 +5,10 @@ import { getHedgeStatus, HedgeNotConfiguredError, placeHedge } from "~/lib/hedge
 // Node runtime (ethers/axios SDKs) + never cached — this places real orders.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Pin to Dublin (Ireland). Polymarket geofences the CLOB order endpoint and
+// blocks US IPs, so this function must never run from a US region (Vercel's
+// default is iad1). See vercel.json for the project-wide guarantee.
+export const preferredRegion = "dub1";
 
 /**
  * POST /api/hedge — the FanGuard hedge desk (server-side).
