@@ -1,0 +1,26 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# turbo
+.turbo
+
+# builds
+.next
+out
+dist
+.output
+.wxt
+build
+
+# misc
+*.log
+*.tsbuildinfo
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# env
+.env
+.env*.local

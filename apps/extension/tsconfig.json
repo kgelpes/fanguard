@@ -1,0 +1,10 @@
+{
+  // WXT generates .wxt/tsconfig.json (with the ~/* and @/* aliases pointing at
+  // the project root) when you run `wxt prepare`. It runs automatically on
+  // install via the postinstall script.
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
+  }
+}
