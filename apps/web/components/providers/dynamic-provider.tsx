@@ -6,19 +6,25 @@ import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http } from "viem";
-import { polygon } from "viem/chains";
+import { arbitrum, base, mainnet, polygon } from "viem/chains";
 import { createConfig, WagmiProvider } from "wagmi";
 
 import { env } from "~/env";
 
-// wagmi config — Fanguard settles on Polygon mainnet (chain 137), co-located
-// with the Polymarket hedge. Dynamic injects the embedded wallet as the
-// connector via <DynamicWagmiConnector>, so no connectors are listed here.
+// wagmi config — Fanguard SETTLES on Polygon mainnet (137), co-located with the
+// Polymarket hedge. The fan can PAY from any of these chains, though (Dynamic
+// Flow swaps/bridges to the settlement USDC), so each must be a wagmi chain the
+// embedded wallet can switch to and sign on. Keep in sync with PAYMENT_SOURCES.
+// Dynamic injects the embedded wallet as the connector via
+// <DynamicWagmiConnector>, so no connectors are listed here.
 const config = createConfig({
-  chains: [polygon],
+  chains: [polygon, mainnet, base, arbitrum],
   multiInjectedProviderDiscovery: false,
   transports: {
     [polygon.id]: http(),
+    [mainnet.id]: http(),
+    [base.id]: http(),
+    [arbitrum.id]: http(),
   },
 });
 
