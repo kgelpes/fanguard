@@ -198,7 +198,11 @@ export function useFlowPayment() {
         if (final.settlementState === "completed") {
           setStatus("completed");
         } else {
-          setError(`Settlement ${final.settlementState || final.executionState}.`);
+          // Surface Flow's real reason. Without this, an on-chain execution
+          // failure shows up as the useless "Settlement none." (settlementState
+          // never left its initial state because execution failed first).
+          console.error("[flow] payment did not settle", final);
+          setError(settlementError(final));
           setStatus("failed");
         }
       } catch (err) {
@@ -214,4 +218,29 @@ export function useFlowPayment() {
 
 function describe(error: unknown): string {
   return error instanceof Error ? error.message : "Payment failed.";
+}
+
+/**
+ * Turn a non-completed terminal status into something the fan can act on.
+ * Prefers Flow's structured `failure.message`, then the specific terminal
+ * state, then (when we stopped polling mid-flight) a "may still complete" note —
+ * never the bare "Settlement none." that hid the real cause.
+ */
+function settlementError(final: FlowStatusResult): string {
+  const reason = final.failure?.message?.trim();
+  if (reason) return final.failure?.retryable === false ? reason : `${reason} Please try again.`;
+
+  switch (final.executionState) {
+    case "failed":
+      return "Your payment didn't go through on-chain. No funds left your wallet — please try again.";
+    case "cancelled":
+      return "Payment was cancelled. Please try again.";
+    case "expired":
+      return "The payment timed out before it went through. Please try again.";
+  }
+  if (final.settlementState === "failed") {
+    return "Settlement failed — your funds are safe in your wallet. Please try again.";
+  }
+  // Still mid-settlement when we stopped polling: it may yet complete.
+  return "Still finishing up — your payment may complete shortly. Check your wallet before retrying.";
 }

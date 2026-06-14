@@ -1,6 +1,17 @@
 // Shapes returned by the Fireblocks Flow checkout API that we actually read.
 // Trimmed to what the payment flow needs — the API returns more fields.
 
+/** Structured failure detail Flow records on a transaction when an op fails. */
+export interface FlowFailure {
+  code?: string;
+  /** Human-readable reason — the most useful thing to show the fan. */
+  message?: string;
+  category?: string;
+  /** Which axis failed, e.g. "execution" or "settlement". */
+  stage?: string;
+  retryable?: boolean;
+}
+
 export interface FlowFees {
   totalFeeUsd?: string;
   gasEstimate?: {
@@ -39,6 +50,7 @@ export interface FlowTransaction {
   riskState: string;
   quoteVersion: number;
   quote?: (Partial<FlowQuote> & { signingPayload?: EvmSigningPayload }) | null;
+  failure?: FlowFailure | null;
 }
 
 /** What the server's `start` action hands back to the client so it can sign. */
@@ -54,4 +66,5 @@ export interface FlowStatusResult {
   executionState: string;
   settlementState: string;
   riskState: string;
+  failure?: FlowFailure | null;
 }

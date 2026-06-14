@@ -70,6 +70,7 @@ export async function POST(request: Request) {
           executionState: tx.executionState,
           settlementState: tx.settlementState,
           riskState: tx.riskState,
+          failure: tx.failure ?? null,
         });
       }
 
@@ -81,6 +82,7 @@ export async function POST(request: Request) {
           executionState: tx.executionState,
           settlementState: tx.settlementState,
           riskState: tx.riskState,
+          failure: tx.failure ?? null,
         });
       }
 
