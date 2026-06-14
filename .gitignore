@@ -28,3 +28,7 @@ build
 # vercel (project link + pulled env)
 .vercel
 .env*
+
+# secrets — Blink merchant signing keypair (never commit, never bundle)
+.secrets/
+*.pem

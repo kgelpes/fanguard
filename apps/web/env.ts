@@ -23,6 +23,10 @@ export const env = createEnv({
     PRIVATE_KEY: z.string().optional(),
     // Polygon RPC for the hedge route. Defaults to a public endpoint.
     POLYGON_RPC_URL: z.string().url().optional(),
+    // Blink signer: P-256 PKCS8 private key (PEM as a single line with literal
+    // \n) used by /api/sign-payment to sign deposit payloads. Server-only — the
+    // matching public key is registered with Blink. The signer 501s without it.
+    BLINK_MERCHANT_PRIVATE_KEY: z.string().min(1).optional(),
   },
   client: {
     // Must be prefixed with NEXT_PUBLIC_ to be exposed to the browser.
@@ -33,6 +37,12 @@ export const env = createEnv({
     // the real premium still drives the loss-framed UI. Remove once the
     // Polymarket-funded payout is wired up so fans pay the true premium.
     NEXT_PUBLIC_FLOW_TEST_PREMIUM_USD: z.coerce.number().positive().optional(),
+    // Blink merchant id (PUBLIC — safe in client code). Powers the SDK preload
+    // and is echoed by the signer. Without it, the deposit step shows a setup hint.
+    NEXT_PUBLIC_BLINK_MERCHANT_ID: z.string().min(1).optional(),
+    // Which Blink hosted flow to open: "sandbox" (testnet, pay-sandbox.blink.cash)
+    // or "production" (pay.blink.cash). Defaults to "production" in the SDK.
+    NEXT_PUBLIC_BLINK_ENV: z.enum(["sandbox", "production"]).optional(),
   },
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
@@ -45,6 +55,9 @@ export const env = createEnv({
     HEDGE_PRIVATE_KEY: process.env.HEDGE_PRIVATE_KEY,
     PRIVATE_KEY: process.env.PRIVATE_KEY,
     POLYGON_RPC_URL: process.env.POLYGON_RPC_URL,
+    BLINK_MERCHANT_PRIVATE_KEY: process.env.BLINK_MERCHANT_PRIVATE_KEY,
+    NEXT_PUBLIC_BLINK_MERCHANT_ID: process.env.NEXT_PUBLIC_BLINK_MERCHANT_ID,
+    NEXT_PUBLIC_BLINK_ENV: process.env.NEXT_PUBLIC_BLINK_ENV,
   },
   emptyStringAsUndefined: true,
   // Set SKIP_ENV_VALIDATION=1 to skip (e.g. in Docker builds).
