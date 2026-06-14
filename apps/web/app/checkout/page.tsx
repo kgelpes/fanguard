@@ -195,6 +195,7 @@ function CheckoutInner() {
           {quote.state === "done" && (
             <PayFlow
               premium={quote.quote.premium}
+              payout={quote.quote.payout}
               team={team}
               matchup={matchup}
               onPaid={() => {

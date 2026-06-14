@@ -53,6 +53,7 @@ export async function POST(request: Request) {
           fromChainName: asString(payload.fromChainName) || undefined,
           fromTokenAddress: asString(payload.fromTokenAddress) || undefined,
           memo: isRecord(payload.memo) ? payload.memo : undefined,
+          settleToSource: payload.settleToSource === true,
         });
         return NextResponse.json(result);
       }
@@ -99,7 +100,10 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof FlowNotConfiguredError) {
       // 501 Not Implemented — Flow isn't wired up in this environment yet.
-      return NextResponse.json({ error: error.message, code: "FLOW_NOT_CONFIGURED" }, { status: 501 });
+      return NextResponse.json(
+        { error: error.message, code: "FLOW_NOT_CONFIGURED" },
+        { status: 501 },
+      );
     }
     if (error instanceof FlowApiError) {
       return NextResponse.json(
