@@ -2,7 +2,12 @@ import { NoSpreadMarketsError } from "./errors";
 import { findFixtureEvent, moreMarketsSlug } from "./find-event";
 import { GammaClient, type GammaClientOptions } from "./gamma";
 import { parseFixture } from "./fixture";
-import { buildBlowoutCombos, extractSpreads, type BuildCombosOptions } from "./spreads";
+import {
+  buildBlowoutCombos,
+  extractShutoutLeg,
+  extractSpreads,
+  type BuildCombosOptions,
+} from "./spreads";
 import type { FixtureResolution } from "./types";
 
 export interface ResolveFixtureOptions extends BuildCombosOptions {
@@ -55,13 +60,14 @@ export async function resolveFixture(
     moreMarketsSlug: moreMarkets.slug,
     spreads,
     combos,
+    shutoutLeg: extractShutoutLeg(moreMarkets),
   };
 }
 
 export { GammaClient, GammaApiError } from "./gamma";
 export { parseFixture, canonicalTeamName, normalizeName } from "./fixture";
 export { findFixtureEvent, deriveBaseSlug, moreMarketsSlug } from "./find-event";
-export { extractSpreads, buildBlowoutCombos } from "./spreads";
+export { extractSpreads, buildBlowoutCombos, extractShutoutLeg } from "./spreads";
 export { FixtureParseError, EventNotFoundError, NoSpreadMarketsError } from "./errors";
 export type { ParsedFixture } from "./fixture";
 export type { GammaClientOptions, GammaEvent, GammaMarket } from "./gamma";

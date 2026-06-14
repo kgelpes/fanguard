@@ -19,7 +19,7 @@ const bricolage = Bricolage_Grotesque({
 
 export const metadata: Metadata = {
   title: "FanGuard",
-  description: "Insure your night. One tap.",
+  description: "Insure your ticket. One tap.",
 };
 
 // Explicit mobile viewport — the Blink hosted flow + responsive checkout rely on it.

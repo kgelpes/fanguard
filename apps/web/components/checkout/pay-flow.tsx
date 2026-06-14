@@ -212,8 +212,8 @@ export function PayFlow({
             You’re covered{isTest ? " (demo)" : ""}
           </h3>
           <p className="text-muted-foreground text-sm text-balance">
-            Your {usd(charge)} {isTest ? "demo payment" : "premium"} is paid. If {team} gets blown
-            out, your payout’s waiting — before you leave the stadium.
+            Your {usd(charge)} {isTest ? "demo payment" : "premium"} is paid. If {team} gets
+            crushed, your payout’s waiting — before you leave the stadium.
           </p>
         </div>
         {mintResult?.txHash && (
@@ -234,7 +234,7 @@ export function PayFlow({
     <div className="bg-card text-card-foreground flex flex-col rounded-xl border p-5">
       {/* Premium — the price line of the receipt. */}
       <div className="flex items-baseline justify-between">
-        <span className="text-sm font-medium">Tonight’s premium</span>
+        <span className="text-sm font-medium">Your premium</span>
         <span className="font-display text-2xl font-semibold tabular-nums">{usd(charge)}</span>
       </div>
       {isTest && (

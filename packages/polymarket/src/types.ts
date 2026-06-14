@@ -24,6 +24,11 @@ export interface ComboLeg {
   question: string;
   /** Human label for what this leg requires, e.g. "Both Teams to Score: No". */
   selection: string;
+  /**
+   * For spread legs: the margin threshold (e.g. 2.5 — the favorite must win by
+   * MORE than this). Absent on non-spread legs (e.g. the clean-sheet proxy).
+   */
+  line?: number;
   probability: number;
   decimalOdds: number;
   tokenId: string | null;
@@ -77,4 +82,10 @@ export interface FixtureResolution {
   spreads: SpreadLeg[];
   /** One blowout combo per team that has spread markets (usually two). */
   combos: BlowoutCombo[];
+  /**
+   * The opponent-shutout proxy leg (BTTS "No"), if the event has a BTTS market.
+   * Returned standalone so pricing can decide whether to stack it onto a combo
+   * (e.g. to lower an expensive cover) without re-resolving the fixture.
+   */
+  shutoutLeg: ComboLeg | null;
 }

@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@fanguard/polymarket": "workspace:*",
+    "@fanguard/pricing": "workspace:*",
     "@radix-ui/react-slot": "catalog:",
     "@t3-oss/env-core": "0.13.11",
     "class-variance-authority": "catalog:",
