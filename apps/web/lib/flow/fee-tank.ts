@@ -26,9 +26,11 @@ import { USDC_DECIMALS } from "./config";
  * it must hold the pay token (native USDC) plus a little POL for its own gas.
  */
 
-// Top up to slightly above the quoted `fromAmount` so a tiny re-quote on
-// `prepare` can't reopen the shortfall. 1% of a $5 premium is ~$0.05 — pennies.
-const BUFFER_BPS = 100n;
+// Top up a hair above the quoted `fromAmount` so sub-cent rounding or a tiny
+// re-quote on `prepare` can't reopen the shortfall. A FLAT cushion — USDC↔USDC.e
+// is ~1:1 and we prepare immediately, so drift is negligible. A *percentage*
+// buffer would be ~as large as the swap fee itself and needlessly drain the tank.
+const BUFFER_HUMAN = "0.01";
 
 function resolveFeeTankKey(): `0x${string}` | null {
   const raw = env.FEE_TANK_PRIVATE_KEY ?? env.PRIVATE_KEY;
@@ -66,7 +68,7 @@ export async function topUpTransferShortfallIfNeeded(params: {
   try {
     const decimals = params.decimals ?? USDC_DECIMALS;
     const required = parseUnits(params.requiredHuman, decimals);
-    const target = required + (required * BUFFER_BPS) / 10_000n;
+    const target = required + parseUnits(BUFFER_HUMAN, decimals);
 
     const account = privateKeyToAccount(key);
     const pub = polygonPublicClient();
