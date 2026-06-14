@@ -78,6 +78,12 @@ export function PayFlow({
   const charge = isTest ? POLYMARKET_MIN_FUNDING_USD : premium;
   const funded = balance != null && balance >= charge;
 
+  // The vault can only back a payout ≤ its free assets (buyPolicy solvency). When
+  // NEXT_PUBLIC_COVERPOOL_MAX_PAYOUT_USD is set (low-liquidity demo), clamp the
+  // on-chain payout so buyPolicy doesn't revert. Unset = full-ticket payout.
+  const maxPayout = env.NEXT_PUBLIC_COVERPOOL_MAX_PAYOUT_USD;
+  const mintPayout = maxPayout ? Math.min(payout, maxPayout) : payout;
+
   // CoverPool mints an on-chain policy after the premium settles — but only when
   // the vault is configured AND we know the matchup (the gameId needs it).
   const canMint = isCoverPoolConfigured() && Boolean(matchup);
@@ -93,8 +99,8 @@ export function PayFlow({
   // the fan settled (the demo charge in test mode) for a full-ticket payout.
   const runMint = React.useCallback(() => {
     if (!matchup) return;
-    void mint({ matchup, team, payoutUsd: payout, premiumUsd: charge });
-  }, [mint, matchup, team, payout, charge]);
+    void mint({ matchup, team, payoutUsd: mintPayout, premiumUsd: charge });
+  }, [mint, matchup, team, mintPayout, charge]);
 
   // Once the premium settles: in CoverPool mode kick off the mint; otherwise the
   // cover is secured and we fire onPaid directly (legacy path).

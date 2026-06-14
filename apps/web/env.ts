@@ -75,6 +75,10 @@ export const env = createEnv({
     // Which Blink hosted flow to open: "sandbox" (testnet, pay-sandbox.blink.cash)
     // or "production" (pay.blink.cash). Defaults to "production" in the SDK.
     NEXT_PUBLIC_BLINK_ENV: z.enum(["sandbox", "production"]).optional(),
+    // DEMO: cap the on-chain policy payout (USD) so buyPolicy fits a low-liquidity
+    // vault — the pool can only back payout ≤ its free assets (solvency). Set this
+    // small (e.g. 3) when the vault holds little; unset = full-ticket payout.
+    NEXT_PUBLIC_COVERPOOL_MAX_PAYOUT_USD: z.coerce.number().positive().optional(),
     // Parent ENS name that per-policy certificates hang off of, e.g. "fanguard.eth"
     // (PUBLIC — used to build the resolvable name + the profile link). Must be the
     // domain you enabled in NameStone. When unset, the ENS certificate is skipped.
@@ -108,6 +112,7 @@ export const env = createEnv({
     NAMESTONE_API_KEY: process.env.NAMESTONE_API_KEY,
     NEXT_PUBLIC_BLINK_MERCHANT_ID: process.env.NEXT_PUBLIC_BLINK_MERCHANT_ID,
     NEXT_PUBLIC_BLINK_ENV: process.env.NEXT_PUBLIC_BLINK_ENV,
+    NEXT_PUBLIC_COVERPOOL_MAX_PAYOUT_USD: process.env.NEXT_PUBLIC_COVERPOOL_MAX_PAYOUT_USD,
     NEXT_PUBLIC_COVERPOOL_ADDRESS: process.env.NEXT_PUBLIC_COVERPOOL_ADDRESS,
     NEXT_PUBLIC_ENS_PARENT_DOMAIN: process.env.NEXT_PUBLIC_ENS_PARENT_DOMAIN,
     NEXT_PUBLIC_ENS_NETWORK: process.env.NEXT_PUBLIC_ENS_NETWORK,
