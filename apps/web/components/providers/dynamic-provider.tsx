@@ -5,11 +5,24 @@ import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { http } from "viem";
+import { fallback, http } from "viem";
 import { arbitrum, base, mainnet, polygon } from "viem/chains";
 import { createConfig, WagmiProvider } from "wagmi";
 
 import { env } from "~/env";
+
+// Polygon RPCs, in failover order. `http()` with no URL falls back to viem's
+// default (polygon.drpc.org), a load-balanced aggregator that intermittently
+// answers eth_getTransactionReceipt with "Unknown block" (a backend node that
+// hasn't indexed the tx's block yet) — which breaks waitForTransactionReceipt
+// mid-mint. Use a `fallback` across stable nodes so one lagging node fails over
+// instead of erroring. Set NEXT_PUBLIC_POLYGON_RPC_URL to a keyed RPC (Alchemy/
+// Infura) to put a high-reliability endpoint first.
+const polygonRpcUrls = [
+  env.NEXT_PUBLIC_POLYGON_RPC_URL,
+  "https://polygon-bor-rpc.publicnode.com",
+  "https://polygon-rpc.com",
+].filter((url): url is string => Boolean(url));
 
 // wagmi config — FanGuard SETTLES on Polygon mainnet (137), co-located with the
 // Polymarket hedge. The fan can PAY from any of these chains, though (Dynamic
@@ -21,7 +34,7 @@ const config = createConfig({
   chains: [polygon, mainnet, base, arbitrum],
   multiInjectedProviderDiscovery: false,
   transports: {
-    [polygon.id]: http(),
+    [polygon.id]: fallback(polygonRpcUrls.map((url) => http(url))),
     [mainnet.id]: http(),
     [base.id]: http(),
     [arbitrum.id]: http(),

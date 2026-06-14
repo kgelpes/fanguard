@@ -77,6 +77,11 @@ export const env = createEnv({
     // Which network the parent name lives on: "mainnet" or "sepolia" (PUBLIC —
     // only used to build the right app.ens.domains profile link). Default mainnet.
     NEXT_PUBLIC_ENS_NETWORK: z.enum(["mainnet", "sepolia"]).optional(),
+    // Browser-side Polygon RPC (PUBLIC). Put a keyed endpoint (Alchemy/Infura)
+    // here so wagmi doesn't fall back to viem's flaky default (polygon.drpc.org),
+    // which intermittently 500s receipt polls with "Unknown block". Optional —
+    // dynamic-provider.tsx already fails over to stable public nodes without it.
+    NEXT_PUBLIC_POLYGON_RPC_URL: z.string().url().optional(),
   },
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
@@ -100,6 +105,7 @@ export const env = createEnv({
     NEXT_PUBLIC_COVERPOOL_ADDRESS: process.env.NEXT_PUBLIC_COVERPOOL_ADDRESS,
     NEXT_PUBLIC_ENS_PARENT_DOMAIN: process.env.NEXT_PUBLIC_ENS_PARENT_DOMAIN,
     NEXT_PUBLIC_ENS_NETWORK: process.env.NEXT_PUBLIC_ENS_NETWORK,
+    NEXT_PUBLIC_POLYGON_RPC_URL: process.env.NEXT_PUBLIC_POLYGON_RPC_URL,
   },
   emptyStringAsUndefined: true,
   // Set SKIP_ENV_VALIDATION=1 to skip (e.g. in Docker builds).
