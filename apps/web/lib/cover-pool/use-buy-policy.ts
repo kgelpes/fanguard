@@ -26,6 +26,7 @@ export type BuyPolicyStatus =
   | "signing" // settler is opening the game + signing the quote
   | "approving" // fan approves the vault to pull the premium (USDC.e)
   | "buying" // fan submits buyPolicy
+  | "certifying" // issuing the gasless ENS certificate-of-cover
   | "done"
   | "error";
 
@@ -33,6 +34,10 @@ export interface BuyPolicyResult {
   policyId: string | null;
   txHash: `0x${string}`;
   gameId: string;
+  /** Resolvable ENS certificate name (e.g. `policy-42.fanguard.eth`), if issued. */
+  ensName: string | null;
+  /** Public ENS profile link where the cover terms resolve, if issued. */
+  ensUrl: string | null;
 }
 
 interface MintInput {
@@ -144,7 +149,49 @@ export function useBuyPolicy() {
           }
         }
 
-        const out: BuyPolicyResult = { policyId, txHash: buyHash, gameId: quote.gameId };
+        // Best-effort: issue the gasless ENS certificate-of-cover. The settler
+        // key stays server-side, so the fan never signs for it. Failures here
+        // never block the cover — it's already secured on-chain above.
+        let ensName: string | null = null;
+        let ensUrl: string | null = null;
+        if (policyId) {
+          setStatus("certifying");
+          try {
+            const certRes = await fetch("/api/cover-certificate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                policyId,
+                buyer: address,
+                matchup: input.matchup,
+                team: input.team,
+                threshold: quote.threshold,
+                payoutUsd: input.payoutUsd,
+                premiumUsd: input.premiumUsd,
+                gameId: quote.gameId,
+                txHash: buyHash,
+              }),
+            });
+            if (certRes.ok) {
+              const cert = (await certRes.json().catch(() => ({}))) as {
+                name?: string;
+                url?: string;
+              };
+              ensName = cert.name ?? null;
+              ensUrl = cert.url ?? null;
+            }
+          } catch {
+            /* non-fatal — the cover stands without the certificate */
+          }
+        }
+
+        const out: BuyPolicyResult = {
+          policyId,
+          txHash: buyHash,
+          gameId: quote.gameId,
+          ensName,
+          ensUrl,
+        };
         setResult(out);
         setStatus("done");
         return out;

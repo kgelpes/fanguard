@@ -31,6 +31,12 @@ export const env = createEnv({
     // \n) used by /api/sign-payment to sign deposit payloads. Server-only — the
     // matching public key is registered with Blink. The signer 501s without it.
     BLINK_MERCHANT_PRIVATE_KEY: z.string().min(1).optional(),
+    // NameStone API key (server-only): issues the per-policy ENS certificate-of-
+    // cover subname + text records gaslessly via NameStone's offchain resolver.
+    // Get one (free, self-serve) at namestone.com and enable your
+    // NEXT_PUBLIC_ENS_PARENT_DOMAIN there. /api/cover-certificate 501s without it;
+    // the checkout still completes (the ENS step is best-effort).
+    NAMESTONE_API_KEY: z.string().min(1).optional(),
   },
   client: {
     // Must be prefixed with NEXT_PUBLIC_ to be exposed to the browser.
@@ -50,6 +56,13 @@ export const env = createEnv({
     // Which Blink hosted flow to open: "sandbox" (testnet, pay-sandbox.blink.cash)
     // or "production" (pay.blink.cash). Defaults to "production" in the SDK.
     NEXT_PUBLIC_BLINK_ENV: z.enum(["sandbox", "production"]).optional(),
+    // Parent ENS name that per-policy certificates hang off of, e.g. "fanguard.eth"
+    // (PUBLIC — used to build the resolvable name + the profile link). Must be the
+    // domain you enabled in NameStone. When unset, the ENS certificate is skipped.
+    NEXT_PUBLIC_ENS_PARENT_DOMAIN: z.string().optional(),
+    // Which network the parent name lives on: "mainnet" or "sepolia" (PUBLIC —
+    // only used to build the right app.ens.domains profile link). Default mainnet.
+    NEXT_PUBLIC_ENS_NETWORK: z.enum(["mainnet", "sepolia"]).optional(),
   },
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
@@ -64,9 +77,12 @@ export const env = createEnv({
     POLYGON_RPC_URL: process.env.POLYGON_RPC_URL,
     SETTLER_PRIVATE_KEY: process.env.SETTLER_PRIVATE_KEY,
     BLINK_MERCHANT_PRIVATE_KEY: process.env.BLINK_MERCHANT_PRIVATE_KEY,
+    NAMESTONE_API_KEY: process.env.NAMESTONE_API_KEY,
     NEXT_PUBLIC_BLINK_MERCHANT_ID: process.env.NEXT_PUBLIC_BLINK_MERCHANT_ID,
     NEXT_PUBLIC_BLINK_ENV: process.env.NEXT_PUBLIC_BLINK_ENV,
     NEXT_PUBLIC_COVERPOOL_ADDRESS: process.env.NEXT_PUBLIC_COVERPOOL_ADDRESS,
+    NEXT_PUBLIC_ENS_PARENT_DOMAIN: process.env.NEXT_PUBLIC_ENS_PARENT_DOMAIN,
+    NEXT_PUBLIC_ENS_NETWORK: process.env.NEXT_PUBLIC_ENS_NETWORK,
   },
   emptyStringAsUndefined: true,
   // Set SKIP_ENV_VALIDATION=1 to skip (e.g. in Docker builds).

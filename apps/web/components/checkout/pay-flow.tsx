@@ -46,6 +46,7 @@ const MINT_PROGRESS: Partial<Record<BuyPolicyStatus, string>> = {
   signing: "Securing your cover…",
   approving: "Confirm in your wallet…",
   buying: "Locking in your policy…",
+  certifying: "Issuing your cover certificate…",
 };
 
 /**
@@ -128,7 +129,11 @@ export function PayFlow({
     payStatus === "awaiting_signature" ||
     payStatus === "broadcasting" ||
     payStatus === "settling";
-  const minting = mintStatus === "signing" || mintStatus === "approving" || mintStatus === "buying";
+  const minting =
+    mintStatus === "signing" ||
+    mintStatus === "approving" ||
+    mintStatus === "buying" ||
+    mintStatus === "certifying";
   const busy = paying || minting;
   const covered = canMint ? mintStatus === "done" : payStatus === "completed";
 
@@ -216,6 +221,17 @@ export function PayFlow({
             crushed, your payout’s waiting — before you leave the stadium.
           </p>
         </div>
+        {mintResult?.ensName && mintResult.ensUrl && (
+          <a
+            href={mintResult.ensUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-xs font-medium"
+          >
+            <span aria-hidden>🛡️</span>
+            {mintResult.ensName}
+          </a>
+        )}
         {mintResult?.txHash && (
           <a
             href={`https://polygonscan.com/tx/${mintResult.txHash}`}

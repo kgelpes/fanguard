@@ -45,10 +45,14 @@ read-only "here's the reprice + the close it would do" panel on the Desk carries
 the real spread line from the trigger combo via `thresholdFromLine()` so `resolve` and the claim
 condition match the actual market the cover was priced on.
 
-### P2 — ENS certificate-of-cover
+### P2 — ENS certificate-of-cover ✅ (built)
 
 One resolvable subname per policy, with the cover terms in text records — the targeted ENS prize.
-Mint on `buyPolicy` success (the `policyId` is already surfaced from the `PolicyBought` event).
+Minted on `buyPolicy` success (the real `policyId` from the `PolicyBought` event), gaslessly and
+server-side via NameStone's offchain resolver. See `apps/web/lib/ens/README.md` for the code map
+and the ≈2-min setup (NameStone key + `NEXT_PUBLIC_ENS_PARENT_DOMAIN`). The settler agent also gets
+an ENSIP-26 identity via `scripts/register-agent-ens.mjs` (AI-agent prize). **Remaining:** register
+the parent name + enable it in NameStone, set env, run the agent script — then demo live.
 
 ### P2 — Real-size hedge execution
 
