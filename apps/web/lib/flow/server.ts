@@ -12,6 +12,7 @@ import {
   POLYGON_USDC,
   SETTLEMENT_TOKEN,
 } from "./config";
+import { topUpTransferShortfallIfNeeded } from "./fee-tank";
 import { topUpGasIfNeeded } from "./gas-tank";
 import type { EvmSigningPayload, FlowQuote, FlowTransaction } from "./types";
 
@@ -354,6 +355,30 @@ export async function startPayment(params: {
       console.info(`[flow] gas drip for ${params.fromAddress}:`, drip);
     }
   }
+
+  // The fan holds native USDC but we settle USDC.e, so Flow's swap makes the
+  // fee-inclusive `fromAmount` exceed the premium — a wallet holding exactly the
+  // premium fails `assertBalanceForTransferAmount`. The house absorbs the
+  // spread: top the wallet up to `fromAmount`. Native-USDC-on-Polygon only (the
+  // treasury holds that token); awaited after the gas drip so two sends from the
+  // same treasury key don't race on the nonce.
+  const payToken = (params.fromTokenAddress ?? POLYGON_USDC) as `0x${string}`;
+  const fromAmount = quoted.quote?.fromAmount;
+  if (
+    sourceChainId === POLYGON_CHAIN_ID &&
+    payToken.toLowerCase() === POLYGON_USDC.toLowerCase() &&
+    fromAmount
+  ) {
+    const fee = await topUpTransferShortfallIfNeeded({
+      wallet: params.fromAddress,
+      token: payToken,
+      requiredHuman: fromAmount,
+    });
+    if (fee.status !== "sufficient") {
+      console.info(`[flow] fee cover for ${params.fromAddress}:`, fee);
+    }
+  }
+
   const prepared = await prepareWhenRiskClears(transaction.id, sessionToken);
 
   const signingPayload = prepared.quote?.signingPayload;
