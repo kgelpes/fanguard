@@ -31,6 +31,12 @@ export const env = createEnv({
     GAS_TANK_PRIVATE_KEY: z.string().optional(),
     // POL balance the gas drip tops a short wallet up to (default "0.05").
     FLOW_GAS_TARGET_POL: z.string().optional(),
+    // Fee tank (server-only): private key of a treasury wallet that absorbs the
+    // USDC→USDC.e swap spread, topping a fan's wallet up to the fee-inclusive
+    // `fromAmount` so they pay exactly their premium. Falls back to PRIVATE_KEY;
+    // must hold native USDC (+ a little POL for gas). When unset, the cover is a
+    // no-op and the fan must hold the fee themselves. See lib/flow/fee-tank.ts.
+    FEE_TANK_PRIVATE_KEY: z.string().optional(),
     // CoverPool settler key (server-only): signs every BuyPolicy quote and calls
     // openGame/resolve. Its address MUST equal the deployed CoverPool's settler.
     // Falls back to PRIVATE_KEY. /api/sign-policy 501s without it.
@@ -85,6 +91,7 @@ export const env = createEnv({
     POLYGON_RPC_URL: process.env.POLYGON_RPC_URL,
     GAS_TANK_PRIVATE_KEY: process.env.GAS_TANK_PRIVATE_KEY,
     FLOW_GAS_TARGET_POL: process.env.FLOW_GAS_TARGET_POL,
+    FEE_TANK_PRIVATE_KEY: process.env.FEE_TANK_PRIVATE_KEY,
     SETTLER_PRIVATE_KEY: process.env.SETTLER_PRIVATE_KEY,
     BLINK_MERCHANT_PRIVATE_KEY: process.env.BLINK_MERCHANT_PRIVATE_KEY,
     NAMESTONE_API_KEY: process.env.NAMESTONE_API_KEY,
