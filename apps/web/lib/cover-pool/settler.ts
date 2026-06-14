@@ -37,7 +37,12 @@ export function polygonPublicClient() {
   return createPublicClient({ chain: polygon, transport: http(rpcUrl()) });
 }
 
+/** A Polygon wallet client bound to `account` (signs + sends from that key). */
+export function polygonWalletClient(account: PrivateKeyAccount) {
+  return createWalletClient({ account, chain: polygon, transport: http(rpcUrl()) });
+}
+
 /** Settler wallet client for openGame / resolve transactions. */
 export function settlerWalletClient(account: PrivateKeyAccount) {
-  return createWalletClient({ account, chain: polygon, transport: http(rpcUrl()) });
+  return polygonWalletClient(account);
 }

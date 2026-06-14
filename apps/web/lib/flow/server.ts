@@ -12,6 +12,7 @@ import {
   POLYGON_USDC,
   SETTLEMENT_TOKEN,
 } from "./config";
+import { topUpGasIfNeeded } from "./gas-tank";
 import type { EvmSigningPayload, FlowQuote, FlowTransaction } from "./types";
 
 /** Thrown when Flow env vars aren't set — surfaced to the client as a 501 with setup hints. */
@@ -316,6 +317,17 @@ export async function startPayment(params: {
   quote: FlowQuote;
   signingPayload: EvmSigningPayload;
 }> {
+  const sourceChainId = params.fromChainId ?? POLYGON_CHAIN_ID;
+
+  // Embedded wallets are funded in USDC but pay Polygon gas in POL — so a
+  // dollar-funded wallet can hold 0 POL and `prepare`'s gas assertion fails
+  // before the fan can sign. Drip a little POL from our gas tank. Only applies
+  // to Polygon sources (other chains settle gas in their own native token).
+  // Kicked off here so the drip mines concurrently with the Flow round-trips
+  // below; awaited right before `prepare`, which is the step that checks gas.
+  const gasDrip =
+    sourceChainId === POLYGON_CHAIN_ID ? topUpGasIfNeeded(params.fromAddress) : null;
+
   const checkoutId = await ensureCheckout(params.settleToSource ? params.fromAddress : undefined);
   const { sessionToken, transaction } = await createTransaction(
     checkoutId,
@@ -327,7 +339,7 @@ export async function startPayment(params: {
     transaction.id,
     sessionToken,
     params.fromAddress,
-    params.fromChainId ?? POLYGON_CHAIN_ID,
+    sourceChainId,
     params.fromChainName ?? FLOW_CHAIN_NAME,
   );
   const quoted = await getQuote(
@@ -335,6 +347,13 @@ export async function startPayment(params: {
     sessionToken,
     params.fromTokenAddress ?? POLYGON_USDC,
   );
+
+  if (gasDrip) {
+    const drip = await gasDrip;
+    if (drip.status !== "sufficient") {
+      console.info(`[flow] gas drip for ${params.fromAddress}:`, drip);
+    }
+  }
   const prepared = await prepareWhenRiskClears(transaction.id, sessionToken);
 
   const signingPayload = prepared.quote?.signingPayload;
