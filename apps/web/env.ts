@@ -23,6 +23,14 @@ export const env = createEnv({
     PRIVATE_KEY: z.string().optional(),
     // Polygon RPC for the hedge route. Defaults to a public endpoint.
     POLYGON_RPC_URL: z.string().url().optional(),
+    // Gas tank (server-only): private key of a small POL-funded wallet that
+    // drips gas into a fan's embedded wallet before checkout, so a USDC-funded
+    // wallet with 0 POL can still pay Polygon gas. Falls back to PRIVATE_KEY
+    // (the same funded wallet the hedge/settler use). When unset, the drip is a
+    // no-op and the fan must hold POL themselves. See lib/flow/gas-tank.ts.
+    GAS_TANK_PRIVATE_KEY: z.string().optional(),
+    // POL balance the gas drip tops a short wallet up to (default "0.05").
+    FLOW_GAS_TARGET_POL: z.string().optional(),
     // CoverPool settler key (server-only): signs every BuyPolicy quote and calls
     // openGame/resolve. Its address MUST equal the deployed CoverPool's settler.
     // Falls back to PRIVATE_KEY. /api/sign-policy 501s without it.
@@ -75,6 +83,8 @@ export const env = createEnv({
     HEDGE_PRIVATE_KEY: process.env.HEDGE_PRIVATE_KEY,
     PRIVATE_KEY: process.env.PRIVATE_KEY,
     POLYGON_RPC_URL: process.env.POLYGON_RPC_URL,
+    GAS_TANK_PRIVATE_KEY: process.env.GAS_TANK_PRIVATE_KEY,
+    FLOW_GAS_TARGET_POL: process.env.FLOW_GAS_TARGET_POL,
     SETTLER_PRIVATE_KEY: process.env.SETTLER_PRIVATE_KEY,
     BLINK_MERCHANT_PRIVATE_KEY: process.env.BLINK_MERCHANT_PRIVATE_KEY,
     NAMESTONE_API_KEY: process.env.NAMESTONE_API_KEY,
