@@ -1,4 +1,8 @@
+import Link from "next/link";
+import { Download } from "lucide-react";
+
 import { FixtureLookup } from "~/components/fixture-lookup";
+import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 
 export default function Home() {
@@ -12,6 +16,12 @@ export default function Home() {
         </p>
       </div>
       <FixtureLookup />
+      <Button asChild variant="outline">
+        <Link href="/install">
+          <Download />
+          Get the browser extension
+        </Link>
+      </Button>
     </main>
   );
 }
