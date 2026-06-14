@@ -8,6 +8,21 @@ export const MIN_PREMIUM = 5;
 export const FALLBACK_PAYOUT = 250;
 export const MAX_P_BLOWOUT = 0.95;
 
+/**
+ * Polymarket's minimum order: a marketable buy must clear `size × price ≥ $1`.
+ * Mirrors `MIN_ORDER_USD` in the web hedge service.
+ */
+export const POLYMARKET_MIN_ORDER_USD = 1;
+
+/**
+ * The smallest premium that's ALWAYS enough to fund the minimum hedge order
+ * after the payment flows to the desk. A YES share costs up to ~$1 and the order
+ * needs an integer share count with `size × price ≥ $1`, so the worst-case
+ * reserve approaches $2 as the share price nears $1 (e.g. 2 shares × $0.99 =
+ * $1.98). Rounding up to $2 guarantees the order is placeable at any price.
+ */
+export const POLYMARKET_MIN_FUNDING_USD = 2 * POLYMARKET_MIN_ORDER_USD;
+
 export interface QuoteInput {
   /** Per-team blowout combos from a resolved fixture. */
   combos: BlowoutCombo[];

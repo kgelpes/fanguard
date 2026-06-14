@@ -24,3 +24,7 @@ build
 # env
 .env
 .env*.local
+
+# vercel (project link + pulled env)
+.vercel
+.env*

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
-import { getHedgeStatus, HedgeNotConfiguredError, placeHedge } from "~/lib/hedge/service";
+import {
+  getHedgeStatus,
+  HedgeNotConfiguredError,
+  placeHedge,
+  previewHedge,
+} from "~/lib/hedge/service";
 
 // Node runtime (ethers/axios SDKs) + never cached — this places real orders.
 export const runtime = "nodejs";
@@ -27,6 +32,20 @@ export async function POST(request: Request) {
       case "status": {
         return NextResponse.json(await getHedgeStatus());
       }
+      case "preview": {
+        const matchup = asString(payload.matchup);
+        const myTeam = asString(payload.team);
+        if (!matchup || !myTeam) {
+          return badRequest("`matchup` and `team` are required for `preview`.");
+        }
+        const preview = await previewHedge({
+          matchup,
+          myTeam,
+          shutout: payload.shutout === true || payload.shutout === "1",
+          coverageUsd: typeof payload.coverageUsd === "number" ? payload.coverageUsd : undefined,
+        });
+        return NextResponse.json(preview);
+      }
       case "place": {
         const matchup = asString(payload.matchup);
         const myTeam = asString(payload.team);
@@ -38,6 +57,7 @@ export async function POST(request: Request) {
           myTeam,
           shutout: payload.shutout === true || payload.shutout === "1",
           notionalUsd: typeof payload.notionalUsd === "number" ? payload.notionalUsd : undefined,
+          coverageUsd: typeof payload.coverageUsd === "number" ? payload.coverageUsd : undefined,
         });
         return NextResponse.json(result);
       }
@@ -46,7 +66,10 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     if (error instanceof HedgeNotConfiguredError) {
-      return NextResponse.json({ error: error.message, code: "HEDGE_NOT_CONFIGURED" }, { status: 501 });
+      return NextResponse.json(
+        { error: error.message, code: "HEDGE_NOT_CONFIGURED" },
+        { status: 501 },
+      );
     }
     const message = error instanceof Error ? error.message : "Unexpected hedge error.";
     console.error("[/api/hedge] error", error);

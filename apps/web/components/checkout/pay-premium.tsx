@@ -3,10 +3,16 @@
 import * as React from "react";
 import { useAccount } from "wagmi";
 
+import { POLYMARKET_MIN_FUNDING_USD } from "@fanguard/pricing";
+
 import { Button } from "~/components/ui/button";
-import { env } from "~/env";
-import { DEFAULT_PAYMENT_SOURCE_ID, PAYMENT_SOURCES, resolvePaymentSource } from "~/lib/flow/config";
+import {
+  DEFAULT_PAYMENT_SOURCE_ID,
+  PAYMENT_SOURCES,
+  resolvePaymentSource,
+} from "~/lib/flow/config";
 import { useFlowPayment, type FlowPaymentStatus } from "~/lib/flow/use-flow-payment";
+import { useTestMode } from "~/lib/test-mode";
 
 function formatUsd(value: number): string {
   return value.toLocaleString(undefined, {
@@ -59,11 +65,10 @@ export function PayPremium({
   const [sourceId, setSourceId] = React.useState(DEFAULT_PAYMENT_SOURCE_ID);
   const source = resolvePaymentSource(sourceId);
 
-  // TEST ONLY: charge a tiny capped amount while the real premium still frames
-  // the product. Remove NEXT_PUBLIC_FLOW_TEST_PREMIUM_USD to charge the true premium.
-  const testPremium = env.NEXT_PUBLIC_FLOW_TEST_PREMIUM_USD;
-  const isTest = typeof testPremium === "number";
-  const chargeUsd = isTest ? testPremium : premium;
+  // Global test mode: charge the smallest amount that still funds a live hedge
+  // order, instead of the full premium. Toggled app-wide.
+  const { testMode: isTest } = useTestMode();
+  const chargeUsd = isTest ? POLYMARKET_MIN_FUNDING_USD : premium;
 
   const busy =
     status === "starting" ||
@@ -141,7 +146,7 @@ export function PayPremium({
 
       <Button onClick={handlePay} disabled={busy} className="self-start">
         {busy
-          ? PROGRESS_COPY[status] ?? "Working…"
+          ? (PROGRESS_COPY[status] ?? "Working…")
           : `Pay ${formatUsd(chargeUsd)} with ${source.symbol}${isTest ? " (test)" : ""}`}
       </Button>
 
