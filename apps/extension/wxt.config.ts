@@ -18,8 +18,8 @@ export default defineConfig({
   // bridge (Vite 8 / plugin-react v6).
   modules: ["@wxt-dev/module-react"],
   manifest: {
-    name: "Fanguard",
-    description: "Polymarket odds overlay for live event pages.",
+    name: "FanGuard",
+    description: "Insure your ticket. One tap. Blowout cover at StubHub checkout.",
     permissions: ["storage"],
     // stubhub: read the event page. gamma: the background worker resolves the
     // blowout combo against Polymarket from here when no API base is configured
@@ -29,6 +29,11 @@ export default defineConfig({
       "*://*.stubhub.com/*",
       "*://gamma-api.polymarket.com/*",
       ...(apiHostPermission ? [apiHostPermission] : []),
+    ],
+    // The overlay renders inside a content-script Shadow DOM, so the brand
+    // shield must be reachable from the StubHub page context.
+    web_accessible_resources: [
+      { resources: ["fanguard-shield.png"], matches: ["*://*.stubhub.com/*"] },
     ],
   },
   vite: () => ({
