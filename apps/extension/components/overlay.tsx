@@ -11,6 +11,9 @@ const MARKUP = 1.15;
 const MIN_PREMIUM = 5;
 const FALLBACK_PAYOUT = 250;
 
+// Where the "Add cover" hand-off opens. WXT inlines WXT_PUBLIC_* at build time.
+const WEB_APP_URL = import.meta.env.WXT_PUBLIC_API_URL ?? "http://localhost:3000";
+
 type ComboState =
   | { state: "loading" }
   | { state: "error"; message: string }
@@ -96,7 +99,14 @@ export function Overlay({ event }: { event: DetectedEvent }) {
           <p className="text-muted-foreground text-sm">{combo.message}</p>
         )}
 
-        {combo.state === "done" && <CoverOffer data={combo.data} payout={payout} />}
+        {combo.state === "done" && (
+          <CoverOffer
+            data={combo.data}
+            payout={payout}
+            matchup={matchup}
+            ticketPriceUsd={event.priceUsd}
+          />
+        )}
       </div>
     </div>
   );
@@ -105,9 +115,13 @@ export function Overlay({ event }: { event: DetectedEvent }) {
 function CoverOffer({
   data,
   payout,
+  matchup,
+  ticketPriceUsd,
 }: {
   data: Extract<ResolveFixtureResponse, { ok: true }>["data"];
   payout: number;
+  matchup: string;
+  ticketPriceUsd: number | null;
 }) {
   const [myTeam, setMyTeam] = useState<string | null>(null);
 
@@ -159,11 +173,19 @@ function CoverOffer({
   const pBlowout = Math.min(0.95, triggerCombo.blowoutProbability);
   const premium = Math.max(MIN_PREMIUM, pBlowout * payout * MARKUP);
 
+  // Hand off to the web checkout, carrying the ticket price in the URL so it
+  // re-prices the cover and sizes the hedge to the fan's real night.
+  function openCheckout() {
+    const params = new URLSearchParams({ q: matchup, team: myTeam!, shutout: "1" });
+    if (ticketPriceUsd != null) params.set("price", String(Math.round(ticketPriceUsd)));
+    window.open(`${WEB_APP_URL}/checkout?${params.toString()}`, "_blank", "noopener");
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm font-semibold">Protect your {formatUsd(payout)} night</p>
       <p className="text-muted-foreground text-xs">Pays out if {myTeam} gets blown out.</p>
-      <Button className="mt-1 w-full" size="sm">
+      <Button className="mt-1 w-full" size="sm" onClick={openCheckout}>
         Add cover · {formatUsd(premium)}
       </Button>
       <button

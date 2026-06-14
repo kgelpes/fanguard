@@ -1,0 +1,8 @@
+"$schema" = "https://conductor.build/schemas/settings.repo.schema.json"
+
+[scripts]
+# Runs on every new workspace: install deps + pull env from Vercel (see setup.sh).
+setup = "bash .conductor/setup.sh"
+# Run button → the web demo on the workspace's allocated port.
+run = "pnpm --filter @fanguard/web exec next dev --port $CONDUCTOR_PORT"
+run_mode = "concurrent"

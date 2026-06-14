@@ -3,6 +3,7 @@
 import { getAddress } from "viem";
 
 import { env } from "~/env";
+import { hedgeEoaAddress } from "../hedge/key";
 import {
   DEFAULT_SETTLEMENT_ADDRESS,
   FLOW_API_BASE,
@@ -62,8 +63,21 @@ function checksum(address: string, label: string): string {
   }
 }
 
+/**
+ * Where the premium settles (as USDC.e on Polygon). Precedence:
+ *   1. FLOW_SETTLEMENT_ADDRESS — explicit override (e.g. the CoverPool contract).
+ *   2. The hedge EOA — so the premium auto-funds the Polymarket hedge
+ *      (`fundDepositWalletFromEoa` sweeps USDC.e from this exact wallet).
+ *   3. The treasury default — only when no hedge key is configured.
+ * Without (2), the premium would land somewhere the hedge desk can't see.
+ */
 function settlementAddress(): string {
-  return checksum(env.FLOW_SETTLEMENT_ADDRESS ?? DEFAULT_SETTLEMENT_ADDRESS, "settlement destination");
+  if (env.FLOW_SETTLEMENT_ADDRESS) {
+    return checksum(env.FLOW_SETTLEMENT_ADDRESS, "settlement destination");
+  }
+  const hedgeEoa = hedgeEoaAddress();
+  if (hedgeEoa) return checksum(hedgeEoa, "hedge EOA settlement destination");
+  return checksum(DEFAULT_SETTLEMENT_ADDRESS, "settlement destination");
 }
 
 /** Single fetch wrapper: JSON in/out, throws FlowApiError on non-2xx with a useful message. */
@@ -107,7 +121,7 @@ function extractError(parsed: unknown): string | undefined {
   const extra = Array.isArray(
     (body.payload as { additionalMessages?: unknown } | undefined)?.additionalMessages,
   )
-    ? ((body.payload as { additionalMessages: string[] }).additionalMessages.join("; "))
+    ? (body.payload as { additionalMessages: string[] }).additionalMessages.join("; ")
     : undefined;
   return [base, extra, code && `[${code}]`].filter(Boolean).join(" ") || undefined;
 }
@@ -130,35 +144,32 @@ export async function ensureCheckout(): Promise<string> {
   if (env.FLOW_CHECKOUT_ID) return env.FLOW_CHECKOUT_ID;
   if (cachedCheckoutId) return cachedCheckoutId;
 
-  const checkout = await flowFetch<{ id: string }>(
-    `/environments/${environmentId()}/checkouts`,
-    {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiToken()}` },
-      body: {
-        mode: "payment",
-        settlementConfig: {
-          strategy: "cheapest",
-          settlements: [
-            {
-              chainName: SETTLEMENT_TOKEN.chainName,
-              chainId: SETTLEMENT_TOKEN.chainId,
-              tokenAddress: checksum(SETTLEMENT_TOKEN.address, "settlement token"),
-              symbol: SETTLEMENT_TOKEN.symbol,
-              tokenDecimals: SETTLEMENT_TOKEN.decimals,
-              isNative: SETTLEMENT_TOKEN.isNative,
-            },
-          ],
-        },
-        destinationConfig: {
-          destinations: [
-            { chainName: FLOW_CHAIN_NAME, type: "address", identifier: settlementAddress() },
-          ],
-        },
-        enableOrchestration: true,
+  const checkout = await flowFetch<{ id: string }>(`/environments/${environmentId()}/checkouts`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiToken()}` },
+    body: {
+      mode: "payment",
+      settlementConfig: {
+        strategy: "cheapest",
+        settlements: [
+          {
+            chainName: SETTLEMENT_TOKEN.chainName,
+            chainId: SETTLEMENT_TOKEN.chainId,
+            tokenAddress: checksum(SETTLEMENT_TOKEN.address, "settlement token"),
+            symbol: SETTLEMENT_TOKEN.symbol,
+            tokenDecimals: SETTLEMENT_TOKEN.decimals,
+            isNative: SETTLEMENT_TOKEN.isNative,
+          },
+        ],
       },
+      destinationConfig: {
+        destinations: [
+          { chainName: FLOW_CHAIN_NAME, type: "address", identifier: settlementAddress() },
+        ],
+      },
+      enableOrchestration: true,
     },
-  );
+  });
 
   cachedCheckoutId = checkout.id;
   return checkout.id;
@@ -267,9 +278,7 @@ export async function prepareWhenRiskClears(
       return await prepare(transactionId, sessionToken);
     } catch (error) {
       const isRisk =
-        error instanceof FlowApiError &&
-        error.status === 422 &&
-        /risk/i.test(error.message);
+        error instanceof FlowApiError && error.status === 422 && /risk/i.test(error.message);
       if (!isRisk || attempt === MAX_ATTEMPTS - 1) throw error;
       await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
     }
@@ -310,7 +319,11 @@ export async function startPayment(params: {
     params.fromChainId ?? POLYGON_CHAIN_ID,
     params.fromChainName ?? FLOW_CHAIN_NAME,
   );
-  const quoted = await getQuote(transaction.id, sessionToken, params.fromTokenAddress ?? POLYGON_USDC);
+  const quoted = await getQuote(
+    transaction.id,
+    sessionToken,
+    params.fromTokenAddress ?? POLYGON_USDC,
+  );
   const prepared = await prepareWhenRiskClears(transaction.id, sessionToken);
 
   const signingPayload = prepared.quote?.signingPayload;

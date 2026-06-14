@@ -26,6 +26,7 @@ function formatPercent(probability: number): string {
 export function FixtureLookup() {
   const [query, setQuery] = React.useState("");
   const [shutout, setShutout] = React.useState(false);
+  const [ticketPrice, setTicketPrice] = React.useState("");
   const [status, setStatus] = React.useState<Status>({ state: "idle" });
 
   async function lookup(raw: string) {
@@ -76,6 +77,20 @@ export function FixtureLookup() {
           />
           Stack a clean-sheet leg (rarer “ruined night” trigger)
         </label>
+        <label className="text-muted-foreground flex items-center gap-2 text-sm">
+          Ticket price
+          <div className="border-input bg-background flex h-9 items-center rounded-md border px-2">
+            <span className="text-muted-foreground text-sm">$</span>
+            <input
+              inputMode="decimal"
+              value={ticketPrice}
+              onChange={(e) => setTicketPrice(e.target.value)}
+              placeholder="250"
+              className="placeholder:text-muted-foreground ml-1 w-20 bg-transparent text-sm outline-none"
+            />
+          </div>
+          <span className="text-xs">sizes your premium &amp; cover</span>
+        </label>
         <div className="flex flex-wrap gap-2">
           {EXAMPLES.map((example) => (
             <button
@@ -99,12 +114,22 @@ export function FixtureLookup() {
         </p>
       )}
 
-      {status.state === "done" && <ResolutionView data={status.data} shutout={shutout} />}
+      {status.state === "done" && (
+        <ResolutionView data={status.data} shutout={shutout} ticketPrice={ticketPrice} />
+      )}
     </div>
   );
 }
 
-function ResolutionView({ data, shutout }: { data: FixtureResolution; shutout: boolean }) {
+function ResolutionView({
+  data,
+  shutout,
+  ticketPrice,
+}: {
+  data: FixtureResolution;
+  shutout: boolean;
+  ticketPrice: string;
+}) {
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-card text-card-foreground rounded-lg border p-4">
@@ -125,7 +150,13 @@ function ResolutionView({ data, shutout }: { data: FixtureResolution; shutout: b
 
       <div className="grid gap-4 sm:grid-cols-2">
         {data.combos.map((combo) => (
-          <ComboCard key={combo.team} combo={combo} query={data.query.raw} shutout={shutout} />
+          <ComboCard
+            key={combo.team}
+            combo={combo}
+            query={data.query.raw}
+            shutout={shutout}
+            ticketPrice={ticketPrice}
+          />
         ))}
       </div>
     </div>
@@ -136,16 +167,20 @@ function ComboCard({
   combo,
   query,
   shutout,
+  ticketPrice,
 }: {
   combo: BlowoutCombo;
   query: string;
   shutout: boolean;
+  ticketPrice: string;
 }) {
   // This card is "{combo.team} win big" — the blowout a {combo.opponent} fan
   // fears. So the cover is bought by the opponent's fan; pass that team to
   // checkout so it can price the right trigger.
   const params = new URLSearchParams({ q: query, team: combo.opponent });
   if (shutout) params.set("shutout", "1");
+  const price = Number.parseFloat(ticketPrice);
+  if (Number.isFinite(price) && price > 0) params.set("price", String(price));
   const coverHref = `/checkout?${params.toString()}`;
 
   return (

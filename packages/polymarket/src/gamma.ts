@@ -77,14 +77,28 @@ export interface GammaClientOptions {
   baseUrl?: string;
   /** Custom fetch implementation; defaults to global `fetch`. */
   fetch?: typeof fetch;
-  /** Per-request timeout in ms. Defaults to 8000. */
+  /** Per-request timeout in ms. Defaults to 12000. */
   timeoutMs?: number;
+  /** Retries on transient failures (timeout, network, 5xx, 429). Defaults to 2. */
+  retries?: number;
 }
+
+/** Gamma gets slow/overloaded under bursts — retry transient failures only. */
+function isRetryable(error: unknown): boolean {
+  if (error instanceof GammaApiError) {
+    // No status → timeout or network error. With status → only 429 / 5xx.
+    return error.status == null || error.status === 429 || error.status >= 500;
+  }
+  return false;
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class GammaClient {
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
   private readonly timeoutMs: number;
+  private readonly retries: number;
 
   constructor(options: GammaClientOptions = {}) {
     this.baseUrl = (options.baseUrl ?? GAMMA_BASE_URL).replace(/\/$/, "");
@@ -98,10 +112,26 @@ export class GammaClient {
       throw new GammaApiError("No fetch implementation available; pass one via options.fetch");
     }
     this.fetchImpl = baseFetch;
-    this.timeoutMs = options.timeoutMs ?? 8000;
+    this.timeoutMs = options.timeoutMs ?? 12000;
+    this.retries = options.retries ?? 2;
   }
 
   private async getJson(path: string, params: Record<string, string | number | boolean>) {
+    let lastError: unknown;
+    for (let attempt = 0; attempt <= this.retries; attempt++) {
+      try {
+        return await this.getJsonOnce(path, params);
+      } catch (error) {
+        lastError = error;
+        if (attempt === this.retries || !isRetryable(error)) throw error;
+        // Backoff before retrying: 300ms, 900ms, … (Gamma usually recovers fast).
+        await sleep(300 * 3 ** attempt);
+      }
+    }
+    throw lastError;
+  }
+
+  private async getJsonOnce(path: string, params: Record<string, string | number | boolean>) {
     const url = new URL(`${this.baseUrl}${path}`);
     for (const [key, value] of Object.entries(params)) {
       url.searchParams.set(key, String(value));
