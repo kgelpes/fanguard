@@ -19,6 +19,17 @@ function rpcUrl(): string {
   return env.POLYGON_RPC_URL ?? "https://polygon-bor-rpc.publicnode.com";
 }
 
+/**
+ * RPC for wide `eth_getLogs` scans (the Desk's GameOpened/PolicyBought history).
+ * Keyed providers throttle getLogs hard — Alchemy's free tier caps it to a
+ * 10-block range — which a deploy-block→latest scan blows past in seconds. Full
+ * public nodes don't cap it, so default there and keep POLYGON_RPC_URL (Alchemy)
+ * for the calls/receipts it's good at. Override with POLYGON_LOGS_RPC_URL.
+ */
+function logsRpcUrl(): string {
+  return env.POLYGON_LOGS_RPC_URL ?? "https://polygon-bor-rpc.publicnode.com";
+}
+
 /** The settler signing key (0x-prefixed), or null when none is configured. */
 export function resolveSettlerPrivateKey(): `0x${string}` | null {
   const raw = env.SETTLER_PRIVATE_KEY ?? env.PRIVATE_KEY;
@@ -35,6 +46,11 @@ export function settlerAccount(): PrivateKeyAccount | null {
 /** Read-only Polygon client for nonces / game state. */
 export function polygonPublicClient() {
   return createPublicClient({ chain: polygon, transport: http(rpcUrl()) });
+}
+
+/** Read-only client for wide `eth_getLogs` scans — see logsRpcUrl(). */
+export function polygonLogsClient() {
+  return createPublicClient({ chain: polygon, transport: http(logsRpcUrl()) });
 }
 
 /** A Polygon wallet client bound to `account` (signs + sends from that key). */

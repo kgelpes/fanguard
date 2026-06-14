@@ -8,7 +8,9 @@ export const COVERPOOL_CHAIN_ID = 137;
 
 // Block the deployed CoverPool was created in — the floor for event log scans
 // (GameOpened / PolicyBought) so the Desk doesn't walk the whole chain.
-export const COVERPOOL_DEPLOY_BLOCK = 88479602n;
+// Native-USDC vault 0xDA5d… deployed at 88495083 (2026-06-14); old USDC.e vault
+// 0x99A9… was 88479602. Keep in sync with NEXT_PUBLIC_COVERPOOL_ADDRESS.
+export const COVERPOOL_DEPLOY_BLOCK = 88495083n;
 
 // CoverPool collateral = bridged USDC.e (6 decimals). The premium is paid in this
 // token — Flow settles the fan's payment into USDC.e, then buyPolicy pulls it.

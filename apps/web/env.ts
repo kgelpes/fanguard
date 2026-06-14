@@ -23,6 +23,11 @@ export const env = createEnv({
     PRIVATE_KEY: z.string().optional(),
     // Polygon RPC for the hedge route. Defaults to a public endpoint.
     POLYGON_RPC_URL: z.string().url().optional(),
+    // RPC for wide eth_getLogs scans (the Desk's event history). Keyed providers
+    // throttle getLogs (Alchemy free tier caps it to 10 blocks); full public
+    // nodes don't. Defaults to a public node so the Desk works even when
+    // POLYGON_RPC_URL is a keyed endpoint. See lib/cover-pool/settler.ts.
+    POLYGON_LOGS_RPC_URL: z.string().url().optional(),
     // Gas tank (server-only): private key of a small POL-funded wallet that
     // drips gas into a fan's embedded wallet before checkout, so a USDC-funded
     // wallet with 0 POL can still pay Polygon gas. Falls back to PRIVATE_KEY
@@ -94,6 +99,7 @@ export const env = createEnv({
     HEDGE_PRIVATE_KEY: process.env.HEDGE_PRIVATE_KEY,
     PRIVATE_KEY: process.env.PRIVATE_KEY,
     POLYGON_RPC_URL: process.env.POLYGON_RPC_URL,
+    POLYGON_LOGS_RPC_URL: process.env.POLYGON_LOGS_RPC_URL,
     GAS_TANK_PRIVATE_KEY: process.env.GAS_TANK_PRIVATE_KEY,
     FLOW_GAS_TARGET_POL: process.env.FLOW_GAS_TARGET_POL,
     FEE_TANK_PRIVATE_KEY: process.env.FEE_TANK_PRIVATE_KEY,

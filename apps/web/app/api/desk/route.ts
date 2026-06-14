@@ -8,7 +8,12 @@ import {
   COVERPOOL_DEPLOY_BLOCK,
 } from "~/lib/cover-pool/config";
 import { deriveGameId } from "~/lib/cover-pool/game";
-import { polygonPublicClient, settlerAccount, settlerWalletClient } from "~/lib/cover-pool/settler";
+import {
+  polygonLogsClient,
+  polygonPublicClient,
+  settlerAccount,
+  settlerWalletClient,
+} from "~/lib/cover-pool/settler";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,6 +57,8 @@ export async function POST(request: Request) {
   }
 
   const publicClient = polygonPublicClient();
+  // Wide getLogs scans go to a getLogs-friendly node (see polygonLogsClient).
+  const logsClient = polygonLogsClient();
 
   try {
     switch (body.action) {
@@ -71,13 +78,13 @@ export async function POST(request: Request) {
           ]);
 
         const [openedLogs, boughtLogs] = await Promise.all([
-          publicClient.getLogs({
+          logsClient.getLogs({
             address,
             event: GAME_OPENED,
             fromBlock: COVERPOOL_DEPLOY_BLOCK,
             toBlock: "latest",
           }),
-          publicClient.getLogs({
+          logsClient.getLogs({
             address,
             event: POLICY_BOUGHT,
             fromBlock: COVERPOOL_DEPLOY_BLOCK,
