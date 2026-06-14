@@ -23,6 +23,10 @@ export const env = createEnv({
     PRIVATE_KEY: z.string().optional(),
     // Polygon RPC for the hedge route. Defaults to a public endpoint.
     POLYGON_RPC_URL: z.string().url().optional(),
+    // CoverPool settler key (server-only): signs every BuyPolicy quote and calls
+    // openGame/resolve. Its address MUST equal the deployed CoverPool's settler.
+    // Falls back to PRIVATE_KEY. /api/sign-policy 501s without it.
+    SETTLER_PRIVATE_KEY: z.string().optional(),
     // Blink signer: P-256 PKCS8 private key (PEM as a single line with literal
     // \n) used by /api/sign-payment to sign deposit payloads. Server-only — the
     // matching public key is registered with Blink. The signer 501s without it.
@@ -40,6 +44,9 @@ export const env = createEnv({
     // Blink merchant id (PUBLIC — safe in client code). Powers the SDK preload
     // and is echoed by the signer. Without it, the deposit step shows a setup hint.
     NEXT_PUBLIC_BLINK_MERCHANT_ID: z.string().min(1).optional(),
+    // Deployed CoverPool vault address (PUBLIC). When set, the checkout mints an
+    // on-chain policy after the premium settles; when unset, that step is skipped.
+    NEXT_PUBLIC_COVERPOOL_ADDRESS: z.string().optional(),
     // Which Blink hosted flow to open: "sandbox" (testnet, pay-sandbox.blink.cash)
     // or "production" (pay.blink.cash). Defaults to "production" in the SDK.
     NEXT_PUBLIC_BLINK_ENV: z.enum(["sandbox", "production"]).optional(),
@@ -55,9 +62,11 @@ export const env = createEnv({
     HEDGE_PRIVATE_KEY: process.env.HEDGE_PRIVATE_KEY,
     PRIVATE_KEY: process.env.PRIVATE_KEY,
     POLYGON_RPC_URL: process.env.POLYGON_RPC_URL,
+    SETTLER_PRIVATE_KEY: process.env.SETTLER_PRIVATE_KEY,
     BLINK_MERCHANT_PRIVATE_KEY: process.env.BLINK_MERCHANT_PRIVATE_KEY,
     NEXT_PUBLIC_BLINK_MERCHANT_ID: process.env.NEXT_PUBLIC_BLINK_MERCHANT_ID,
     NEXT_PUBLIC_BLINK_ENV: process.env.NEXT_PUBLIC_BLINK_ENV,
+    NEXT_PUBLIC_COVERPOOL_ADDRESS: process.env.NEXT_PUBLIC_COVERPOOL_ADDRESS,
   },
   emptyStringAsUndefined: true,
   // Set SKIP_ENV_VALIDATION=1 to skip (e.g. in Docker builds).

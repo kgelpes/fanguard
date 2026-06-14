@@ -171,6 +171,7 @@ function CheckoutInner() {
           {quote.state === "done" && (
             <PayFlow
               premium={quote.quote.premium}
+              payout={quote.quote.payout}
               team={team}
               matchup={matchup}
               onPaid={() => {
@@ -209,7 +210,8 @@ function EmptyState() {
     <div className="bg-card text-card-foreground flex flex-col items-center gap-2 rounded-xl border p-8 text-center">
       <h2 className="font-display text-lg font-semibold">No game selected</h2>
       <p className="text-muted-foreground text-sm text-balance">
-        Open FanGuard from your ticket at checkout to protect your night — or look up a game to start.
+        Open FanGuard from your ticket at checkout to protect your night — or look up a game to
+        start.
       </p>
       <a
         href="/"

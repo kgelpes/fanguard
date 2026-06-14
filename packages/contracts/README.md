@@ -117,9 +117,35 @@ BuyPolicy(address buyer,uint256 gameId,uint256 payout,uint256 premium,uint256 no
 blowout exposure stays locked (no sweep); `claim` pays the holder regardless of caller (so the
 settler agent can auto-claim); no fee-on-transfer support; no pause; the settler is trusted.
 
+## Wiring the checkout (go live)
+
+The web checkout mints an on-chain policy once `NEXT_PUBLIC_COVERPOOL_ADDRESS` is
+set (otherwise it skips the step and behaves as before). To turn it on:
+
+1. **Deploy** CoverPool (above). The deployer becomes `owner` + `settler` by
+   default. Fund the deployer with ~1.2 POL for gas first.
+2. **Fund the vault.** `buyPolicy` only allows `payout > premium` when LP
+   collateral backs the gap (solvency invariant). Approve + `deposit(amount)`
+   enough USDC.e to back the demo payouts (e.g. ≥ the largest ticket you'll show).
+   An empty vault can only mint `payout ≤ premium`.
+3. **Set the web env** (`apps/web/.env.local`, and Vercel):
+   - `NEXT_PUBLIC_COVERPOOL_ADDRESS` = the deployed address.
+   - `SETTLER_PRIVATE_KEY` = a key whose address equals the pool's `settler`
+     (the deployer, unless you set `SETTLER`). Needs a little POL for `openGame`.
+   The fan's embedded wallet also needs a little POL for `approve` + `buyPolicy`.
+4. **Flow settles to the fan.** In CoverPool mode the premium settles as USDC.e to
+   the fan's own wallet (so `buyPolicy` can pull it), not the desk. Verify the Flow
+   checkout accepts a per-fan destination in your Dynamic env.
+
+The settler agent that calls `resolve(gameId, margin)` + `claim(policyId)` after
+the game (auto-payout) is still TODO — `gameId` is `deriveGameId(matchup, team)`
+in `apps/web/lib/cover-pool/game.ts`, reuse it there.
+
 ## Deployments (Polygon mainnet, chain 137)
 
 | Contract   | Address | Tx |
 |------------|---------|----|
 | HelloWorld | [`0x78712875590bea3BC4af0b101cF970F38FfF8C6B`](https://polygonscan.com/address/0x78712875590bea3BC4af0b101cF970F38FfF8C6B) | [`0x964d5da3…d07d1592`](https://polygonscan.com/tx/0x964d5da3f95276632b8bafd178cb440b9c63f1c0514b9676e4f71b67d07d1592) |
-| CoverPool  | _not yet deployed_ | — |
+| CoverPool  | [`0x99A9414D0aCA6182Cc817842C63c7Aa8E81bBEbb`](https://polygonscan.com/address/0x99A9414D0aCA6182Cc817842C63c7Aa8E81bBEbb) | [`0xcbb98a44…293c7c9b`](https://polygonscan.com/tx/0xcbb98a44e232fe32add4ceb4de1b18db780fefa07588f2cba8fa448a293c7c9b) |
+
+`collateral` = USDC.e · `owner` = `settler` = `0x1Dd04414C4909362B996306866bF2ba8dA7E9De2` (the deployer).

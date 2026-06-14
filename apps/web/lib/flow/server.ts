@@ -135,14 +135,22 @@ function safeJson(text: string): unknown {
 }
 
 // ── Step 1: Checkout (reusable config) ──────────────────────────────────────
-// A checkout encodes "settle USDC.e on Polygon → our hedge wallet". It's static, so
-// we create it once and cache the id for the life of the server process. Set
-// FLOW_CHECKOUT_ID to reuse one created out-of-band (e.g. via curl) and skip creation.
-let cachedCheckoutId: string | null = null;
+// A checkout encodes "settle USDC.e on Polygon → a destination". The destination
+// is usually static (our hedge wallet), so we cache the id per-destination for
+// the process. In CoverPool mode the destination is the FAN's own wallet (so
+// buyPolicy can pull the settled USDC.e), which varies per fan — hence the map.
+// FLOW_CHECKOUT_ID reuses a checkout created out-of-band, but only for the
+// default desk destination (never a per-fan settle).
+const checkoutCache = new Map<string, string>();
 
-export async function ensureCheckout(): Promise<string> {
-  if (env.FLOW_CHECKOUT_ID) return env.FLOW_CHECKOUT_ID;
-  if (cachedCheckoutId) return cachedCheckoutId;
+export async function ensureCheckout(destination?: string): Promise<string> {
+  const identifier = destination
+    ? checksum(destination, "settlement destination")
+    : settlementAddress();
+
+  if (!destination && env.FLOW_CHECKOUT_ID) return env.FLOW_CHECKOUT_ID;
+  const cached = checkoutCache.get(identifier);
+  if (cached) return cached;
 
   const checkout = await flowFetch<{ id: string }>(`/environments/${environmentId()}/checkouts`, {
     method: "POST",
@@ -163,15 +171,13 @@ export async function ensureCheckout(): Promise<string> {
         ],
       },
       destinationConfig: {
-        destinations: [
-          { chainName: FLOW_CHAIN_NAME, type: "address", identifier: settlementAddress() },
-        ],
+        destinations: [{ chainName: FLOW_CHAIN_NAME, type: "address", identifier }],
       },
       enableOrchestration: true,
     },
   });
 
-  cachedCheckoutId = checkout.id;
+  checkoutCache.set(identifier, checkout.id);
   return checkout.id;
 }
 
@@ -299,13 +305,18 @@ export async function startPayment(params: {
   fromChainName?: string;
   fromTokenAddress?: string;
   memo?: Record<string, unknown>;
+  /**
+   * Settle to the fan's own wallet instead of the desk. Used in CoverPool mode
+   * so the premium lands as USDC.e the fan can spend on `buyPolicy`.
+   */
+  settleToSource?: boolean;
 }): Promise<{
   transactionId: string;
   sessionToken: string;
   quote: FlowQuote;
   signingPayload: EvmSigningPayload;
 }> {
-  const checkoutId = await ensureCheckout();
+  const checkoutId = await ensureCheckout(params.settleToSource ? params.fromAddress : undefined);
   const { sessionToken, transaction } = await createTransaction(
     checkoutId,
     params.amount,

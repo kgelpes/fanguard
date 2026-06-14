@@ -1,13 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  useAccount,
-  useConfig,
-  useSendTransaction,
-  useSwitchChain,
-  useWriteContract,
-} from "wagmi";
+import { useAccount, useConfig, useSendTransaction, useSwitchChain, useWriteContract } from "wagmi";
 import { getPublicClient } from "wagmi/actions";
 
 import {
@@ -99,7 +93,9 @@ export function useFlowPayment() {
         }
         await delay(3000);
       }
-      return last ?? { executionState: "unknown", settlementState: "unknown", riskState: "unknown" };
+      return (
+        last ?? { executionState: "unknown", settlementState: "unknown", riskState: "unknown" }
+      );
     },
     [],
   );
@@ -141,6 +137,7 @@ export function useFlowPayment() {
       amountUsd: number,
       source: PaymentSource = DEFAULT_PAYMENT_SOURCE,
       memo?: Record<string, unknown>,
+      opts?: { settleToSource?: boolean },
     ) => {
       if (!address) {
         setError("Log in to spin up your wallet first.");
@@ -167,6 +164,7 @@ export function useFlowPayment() {
           fromChainName: source.chainName,
           fromTokenAddress: source.tokenAddress,
           memo,
+          settleToSource: opts?.settleToSource ?? false,
         });
         setQuote(start.quote);
 
