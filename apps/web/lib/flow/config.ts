@@ -25,11 +25,18 @@ export const USDC_DECIMALS = 6;
 export const POLYGON_USDC_E = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
 
 // What the checkout settles into and deposits to the settlement address.
+// NATIVE USDC (not USDC.e): fans hold native USDC, and the CoverPool vault now
+// takes native USDC as collateral — so a fan paying native USDC on Polygon
+// settles same-token (Flow builds a direct transfer, no swap/bridge). This
+// avoids the USDC→USDC.e swap that Relay refused to fill for small premiums
+// ("BRIDGE_FAILED: Relay fill failed"). Polymarket's USDC.e/pUSD need is met by
+// a bulk desk conversion off the checkout path — see lib/hedge/service.ts.
+// MUST equal the deployed vault's `collateral` (sign-policy reads that on-chain).
 export const SETTLEMENT_TOKEN = {
   chainName: FLOW_CHAIN_NAME,
   chainId: POLYGON_CHAIN_ID,
-  address: POLYGON_USDC_E,
-  symbol: "USDC.e",
+  address: POLYGON_USDC,
+  symbol: "USDC",
   decimals: USDC_DECIMALS,
   isNative: false,
 } as const;

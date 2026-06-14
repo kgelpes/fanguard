@@ -5,7 +5,7 @@ import { coverPoolAbi } from "~/lib/cover-pool/abi";
 import { coverPoolAddress, COVERPOOL_CHAIN_ID } from "~/lib/cover-pool/config";
 import { deriveGameId, DEFAULT_BLOWOUT_THRESHOLD } from "~/lib/cover-pool/game";
 import { polygonPublicClient, settlerAccount, settlerWalletClient } from "~/lib/cover-pool/settler";
-import { POLYGON_USDC_E, USDC_DECIMALS } from "~/lib/flow/config";
+import { USDC_DECIMALS } from "~/lib/flow/config";
 
 // viem clients (ethers-free) run fine on Edge, but keep Node for parity with the
 // other on-chain routes. Never cached — it reads a live nonce and opens games.
@@ -114,6 +114,16 @@ export async function POST(request: Request) {
       args: [buyer],
     });
 
+    // The vault's collateral is immutable — read it from the contract so the
+    // client approves exactly what buyPolicy will pull, regardless of which
+    // token the pool was deployed with (native USDC now, USDC.e before). This
+    // is the single source of truth; nothing else hardcodes the token.
+    const collateral = await publicClient.readContract({
+      address,
+      abi: coverPoolAbi,
+      functionName: "collateral",
+    });
+
     // 3. Sign the EIP-712 BuyPolicy quote. Domain must match CoverPool.sol exactly.
     const deadline = BigInt(Math.floor(Date.now() / 1000) + QUOTE_TTL_SECONDS);
     const signature = await account.signTypedData({
@@ -140,7 +150,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         coverPoolAddress: address,
-        collateral: getAddress(POLYGON_USDC_E),
+        collateral: getAddress(collateral),
         gameId: gameId.toString(),
         payout: payout.toString(),
         premium: premium.toString(),
