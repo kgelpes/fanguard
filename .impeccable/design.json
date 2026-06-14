@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-14T00:00:00Z",
+  "title": "Design System: FanGuard",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "primary", "displayName": "Ink", "canonical": "oklch(0.205 0 0)", "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.205 0 0)", "oklch(0.27 0 0)", "oklch(0.44 0 0)", "oklch(0.556 0 0)", "oklch(0.708 0 0)", "oklch(0.87 0 0)", "oklch(0.97 0 0)"] },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "oklch(1 0 0)", "tonalRamp": ["oklch(0.205 0 0)", "oklch(0.44 0 0)", "oklch(0.556 0 0)", "oklch(0.708 0 0)", "oklch(0.87 0 0)", "oklch(0.95 0 0)", "oklch(0.985 0 0)", "oklch(1 0 0)"] },
+      "primary": { "role": "primary", "displayName": "Ink (Primary Action)", "canonical": "oklch(0.205 0 0)", "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.205 0 0)", "oklch(0.27 0 0)", "oklch(0.44 0 0)", "oklch(0.556 0 0)", "oklch(0.708 0 0)", "oklch(0.87 0 0)", "oklch(0.97 0 0)"] },
+      "surface-muted": { "role": "neutral", "displayName": "Surface Muted", "canonical": "oklch(0.97 0 0)", "tonalRamp": ["oklch(0.27 0 0)", "oklch(0.44 0 0)", "oklch(0.556 0 0)", "oklch(0.708 0 0)", "oklch(0.87 0 0)", "oklch(0.94 0 0)", "oklch(0.97 0 0)", "oklch(0.99 0 0)"] },
+      "muted-ink": { "role": "neutral", "displayName": "Muted Ink", "canonical": "oklch(0.556 0 0)", "tonalRamp": ["oklch(0.27 0 0)", "oklch(0.38 0 0)", "oklch(0.44 0 0)", "oklch(0.556 0 0)", "oklch(0.62 0 0)", "oklch(0.708 0 0)", "oklch(0.8 0 0)", "oklch(0.87 0 0)"] },
+      "border": { "role": "neutral", "displayName": "Hairline", "canonical": "oklch(0.922 0 0)", "tonalRamp": ["oklch(0.44 0 0)", "oklch(0.556 0 0)", "oklch(0.708 0 0)", "oklch(0.8 0 0)", "oklch(0.87 0 0)", "oklch(0.922 0 0)", "oklch(0.96 0 0)", "oklch(0.99 0 0)"] },
+      "ring": { "role": "neutral", "displayName": "Focus Ring", "canonical": "oklch(0.708 0 0)", "tonalRamp": ["oklch(0.44 0 0)", "oklch(0.556 0 0)", "oklch(0.62 0 0)", "oklch(0.708 0 0)", "oklch(0.8 0 0)", "oklch(0.87 0 0)", "oklch(0.94 0 0)", "oklch(0.99 0 0)"] },
+      "destructive": { "role": "tertiary", "displayName": "Error Red", "canonical": "oklch(0.577 0.245 27.325)", "tonalRamp": ["oklch(0.30 0.12 27)", "oklch(0.40 0.17 27)", "oklch(0.50 0.21 27)", "oklch(0.577 0.245 27.325)", "oklch(0.65 0.22 27)", "oklch(0.74 0.17 27)", "oklch(0.85 0.10 27)", "oklch(0.94 0.04 27)"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "The page title, e.g. 'FanGuard checkout'. One per screen." },
+      "title": { "displayName": "Title", "purpose": "Section headings, e.g. 'Protect your $250 night'." },
+      "body": { "displayName": "Body", "purpose": "Default copy and helper text. Cap prose at 65-75ch." },
+      "label": { "displayName": "Label", "purpose": "Form field labels and eyebrows (uppercase, 0.025em). Form labels only - not decoration." }
+    },
+    "shadows": [
+      { "name": "button-xs", "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)", "purpose": "The only shadow in the system (Tailwind shadow-xs), on buttons. State-only; being retired in favor of tonal layering. Never paired with a border." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default state transition (~150ms): hover, focus, color changes." },
+      { "name": "press", "value": "transform: scale(0.98); transition: transform 150ms cubic-bezier(0.4,0,0.2,1)", "purpose": "Tactile press feedback on buttons. Must have a prefers-reduced-motion: reduce fallback (no transform)." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single primary action per screen (e.g. 'Pay $5'). Ink on paper - in a monochrome system the CTA is maximum contrast.",
+      "html": "<button class=\"ds-btn-primary\">Pay $5 with USDC</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:2.25rem;padding:.5rem 1rem;font:500 .875rem/1 ui-sans-serif,system-ui,sans-serif;color:oklch(0.985 0 0);background:oklch(0.205 0 0);border:none;border-radius:.5rem;cursor:pointer;transition:background .15s cubic-bezier(.4,0,.2,1),transform .15s cubic-bezier(.4,0,.2,1)}.ds-btn-primary:hover{background:oklch(0.255 0 0)}.ds-btn-primary:focus-visible{outline:none;box-shadow:0 0 0 3px oklch(0.708 0 0 / .5)}.ds-btn-primary:active{transform:scale(.98)}.ds-btn-primary:disabled{opacity:.5;cursor:not-allowed}@media (prefers-reduced-motion:reduce){.ds-btn-primary{transition:background .15s ease}.ds-btn-primary:active{transform:none}}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action (e.g. 'Try again'). Paper with a hairline; tints on hover.",
+      "html": "<button class=\"ds-btn-outline\">Try again</button>",
+      "css": ".ds-btn-outline{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:2.25rem;padding:.5rem 1rem;font:500 .875rem/1 ui-sans-serif,system-ui,sans-serif;color:oklch(0.145 0 0);background:oklch(1 0 0);border:1px solid oklch(0.922 0 0);border-radius:.5rem;cursor:pointer;transition:background .15s cubic-bezier(.4,0,.2,1),transform .15s cubic-bezier(.4,0,.2,1)}.ds-btn-outline:hover{background:oklch(0.97 0 0)}.ds-btn-outline:focus-visible{outline:none;box-shadow:0 0 0 3px oklch(0.708 0 0 / .5)}.ds-btn-outline:active{transform:scale(.98)}@media (prefers-reduced-motion:reduce){.ds-btn-outline:active{transform:none}}"
+    },
+    {
+      "name": "Checkout Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The primary container - one decision per card. Shows the dollars-are-the-headline rule: the amount outweighs its label. (Border is current reality; target is a tonal surface step.)",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-row\"><span class=\"ds-card-label\">Tonight's premium</span><span class=\"ds-amount\">$5</span></div><p class=\"ds-card-help\">Pays out if Uruguay gets blown out.</p></div>",
+      "css": ".ds-card{background:oklch(1 0 0);color:oklch(0.145 0 0);border:1px solid oklch(0.922 0 0);border-radius:.875rem;padding:1.25rem;font-family:ui-sans-serif,system-ui,sans-serif}.ds-card-row{display:flex;align-items:center;justify-content:space-between;gap:1rem}.ds-card-label{font-size:.875rem;font-weight:500}.ds-amount{font-size:1.25rem;font-weight:600;font-variant-numeric:tabular-nums}.ds-card-help{margin:.5rem 0 0;font-size:.875rem;line-height:1.25rem;color:oklch(0.556 0 0)}"
+    },
+    {
+      "name": "Ticket Price Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Money input with an inset $ prefix and a focus ring on the wrapper. Border is the one legitimate place lines stay.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Your ticket price</span><div class=\"ds-field-control\"><span class=\"ds-field-prefix\">$</span><input class=\"ds-field-input\" inputmode=\"decimal\" placeholder=\"250\"></div></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:.375rem;font-family:ui-sans-serif,system-ui,sans-serif}.ds-field-label{font-size:.75rem;font-weight:500;letter-spacing:.025em;text-transform:uppercase;color:oklch(0.556 0 0)}.ds-field-control{display:flex;align-items:center;height:2.5rem;padding:0 .75rem;background:oklch(1 0 0);border:1px solid oklch(0.922 0 0);border-radius:.5rem}.ds-field-control:focus-within{box-shadow:0 0 0 2px oklch(0.708 0 0 / .5)}.ds-field-prefix{font-size:.875rem;color:oklch(0.556 0 0)}.ds-field-input{flex:1;margin-left:.25rem;border:none;outline:none;background:transparent;font:400 .875rem ui-sans-serif,system-ui,sans-serif;color:oklch(0.145 0 0)}.ds-field-input::placeholder{color:oklch(0.556 0 0)}"
+    },
+    {
+      "name": "Pay-with Select",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Source-token picker. Same field vocabulary as the text input.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Pay with</span><select class=\"ds-select-control\"><option>USDC · Polygon</option><option>POL · Polygon</option></select></label>",
+      "css": ".ds-select-control{height:2.5rem;padding:0 .75rem;background:oklch(1 0 0);border:1px solid oklch(0.922 0 0);border-radius:.5rem;font:400 .875rem ui-sans-serif,system-ui,sans-serif;color:oklch(0.145 0 0)}.ds-select-control:focus-visible{outline:none;box-shadow:0 0 0 2px oklch(0.708 0 0 / .5)}"
+    },
+    {
+      "name": "Amount Display",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Signature money treatment - the loudest element on screen. tabular-nums, heaviest weight; the protected amount anchors against the loss.",
+      "html": "<div class=\"ds-money\"><span class=\"ds-money-kicker\">Protect your night</span><span class=\"ds-money-amount\">$250</span><span class=\"ds-money-sub\">Premium $5</span></div>",
+      "css": ".ds-money{display:flex;flex-direction:column;gap:.125rem;font-family:ui-sans-serif,system-ui,sans-serif;color:oklch(0.145 0 0)}.ds-money-kicker{font-size:.75rem;font-weight:500;letter-spacing:.025em;text-transform:uppercase;color:oklch(0.556 0 0)}.ds-money-amount{font-size:1.875rem;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}.ds-money-sub{font-size:.875rem;color:oklch(0.556 0 0);font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Flow Stepper",
+      "kind": "nav",
+      "refersTo": "card",
+      "description": "Three-step checkout spine: Cover priced -> Premium paid -> Cover secured. Active is Ink, done is emerald with a check. Plain-language, dollars-free, no jargon.",
+      "html": "<ol class=\"ds-stepper\"><li class=\"ds-step ds-done\"><span class=\"ds-dot\">✓</span>Cover priced</li><span class=\"ds-line ds-done\"></span><li class=\"ds-step ds-active\"><span class=\"ds-dot\">2</span>Premium paid</li><span class=\"ds-line\"></span><li class=\"ds-step\"><span class=\"ds-dot\">3</span>Cover secured</li></ol>",
+      "css": ".ds-stepper{display:flex;align-items:center;gap:.5rem;margin:0;padding:1rem;list-style:none;background:oklch(1 0 0);border:1px solid oklch(0.922 0 0);border-radius:.875rem;font:500 .75rem ui-sans-serif,system-ui,sans-serif}.ds-step{display:flex;align-items:center;gap:.5rem;color:oklch(0.556 0 0)}.ds-step.ds-active,.ds-step.ds-done{color:oklch(0.145 0 0)}.ds-dot{display:flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;border-radius:9999px;font-size:.75rem;font-weight:600;background:oklch(0.97 0 0);color:oklch(0.556 0 0)}.ds-step.ds-active .ds-dot{background:oklch(0.205 0 0);color:oklch(0.985 0 0)}.ds-step.ds-done .ds-dot{background:oklch(0.596 0.145 163);color:#fff}.ds-line{flex:1;height:1px;background:oklch(0.922 0 0)}.ds-line.ds-done{background:oklch(0.596 0.145 163)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Calm Receipt",
+    "overview": "FanGuard is a receipt you actually trust. A fan who just spent $250 on tickets has 10 seconds and zero patience for jargon; the interface answers one question - am I protected, and for how much? - the way a good receipt does: plain, legible, nothing to decode. The warmth in 'warm, human, fan-energy' is carried by clarity and plain language, not by ornament. The system is intentionally restrained: a near-monochrome ink-on-paper base where the money is the only thing that shouts. Dollar amounts are the largest, heaviest, most contrast-rich elements on every screen; everything else recedes. Density is low - one decision per screen, a single primary action. This restraint is the point, not a placeholder: a calm receipt has no business being colorful.",
+    "keyCharacteristics": [
+      "Ink-on-paper restraint; money is the only loud element.",
+      "Dollars only - never a percentage or an odd, ever.",
+      "One screen, one decision, one primary action.",
+      "Plain language over jargon; 'your wallet' and '$', never 0xDd...F8D2 or 'USDC contract'.",
+      "Warmth comes from copy + a single accent, not from decoration."
+    ],
+    "rules": [
+      { "name": "The Receipt Rule", "body": "The surface is ink-on-paper. Color appears only to mean something - a payout (success), a failure (error) - never to fill space or add flavor. If a color isn't carrying meaning, it's wrong.", "section": "colors" },
+      { "name": "The Color Debt Rule", "body": "The system owes exactly one thing: a single warm brand accent for the primary 'protect'/'covered' moment. Until it lands, primary actions ride on Ink. Resolve it deliberately - do not sprinkle multiple new colors; the Receipt Rule still governs.", "section": "colors" },
+      { "name": "The Dollars-Are-The-Headline Rule", "body": "Money always uses tabular-nums and always out-weighs the copy around it. A premium or payout is the loudest thing in its card. Percentages and odds are forbidden on fan-facing screens - spell the trigger in plain English instead.", "section": "typography" },
+      { "name": "The No-Border Rule", "body": "Don't reach for a border to separate two surfaces - step the tint instead. A border is a last resort (e.g. an input's editable affordance), never the default way to define a card.", "section": "elevation" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Any shadow is a response to state (hover, press, a lifted popover), never ambient decoration - and never paired with a border on the same element.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do make the dollar amount the loudest element in any card - tabular-nums, heaviest weight, highest contrast.",
+      "Do speak plainly: 'your wallet', '$5', 'if Saudi Arabia wins big'. Money, not mechanics.",
+      "Do give every interactive control all its states - default, hover, focus-visible (3px ring), active/press, disabled, loading, error.",
+      "Do convey depth with tonal surface steps; reserve borders for input affordances.",
+      "Do keep cards at <=16px radius and <=1.25rem padding; one decision per screen.",
+      "Do provide a prefers-reduced-motion alternative for every transition, including the press-scale.",
+      "Do resolve the single warm accent deliberately before adding any other color."
+    ],
+    "donts": [
+      "Don't show a percentage, a probability, or betting odds to the fan - ever.",
+      "Don't drift toward the gambling / sportsbook look: no neon, no live-odds tickers, no parlay-slip hype.",
+      "Don't drift toward crypto / web3 degen: no price charts, no gas/network jargon, no truncated wallet address as hero content, no dark-mode-neon.",
+      "Don't ship the generic SaaS dashboard: no sterile templated cards-everywhere, no gray-on-gray, no big-metric hero template.",
+      "Don't read as heavy insurance / legalese: no dense forms, fine print, or cold institutional blue.",
+      "Don't use a border-left/border-right > 1px as a colored accent stripe.",
+      "Don't use gradient text; emphasize with weight and size.",
+      "Don't pair a 1px border with a wide soft drop shadow on the same card or button.",
+      "Don't round cards past 16px or nest a card inside a card."
+    ]
+  }
+}

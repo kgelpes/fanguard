@@ -185,23 +185,18 @@ export function HedgeDesk({
             : "…";
 
   return (
-    <div className="bg-card text-card-foreground flex flex-col gap-4 rounded-xl border border-dashed p-5">
+    <div className="bg-card text-card-foreground flex flex-col gap-4 rounded-xl border p-4">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between gap-2 text-left"
       >
         <div className="flex flex-col gap-0.5">
-          <span className="text-muted-foreground text-xs uppercase tracking-wide">
-            Behind the button · hedge desk
-          </span>
-          <span className="text-sm font-medium">The offsetting position on Polymarket</span>
+          <span className="text-muted-foreground text-xs font-medium">Behind the button</span>
+          <span className="text-muted-foreground text-xs">How your cover is funded</span>
         </div>
         <div className="flex items-center gap-2">
           {!open && <span className="text-muted-foreground text-xs">{summary}</span>}
-          <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600">
-            live
-          </span>
           <span className="text-muted-foreground text-xs">{open ? "▲" : "▼"}</span>
         </div>
       </button>

@@ -4,7 +4,7 @@
 
 export const FLOW_API_BASE = "https://app.dynamicauth.com/api/v0";
 
-// Polygon mainnet (137) — Fanguard settles here, co-located with the Polymarket
+// Polygon mainnet (137) — FanGuard settles here, co-located with the Polymarket
 // hedge. Flow groups EVM chains under the "EVM" family name.
 export const POLYGON_CHAIN_ID = "137";
 export const FLOW_CHAIN_NAME = "EVM";

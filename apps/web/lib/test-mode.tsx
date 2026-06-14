@@ -61,9 +61,9 @@ export function TestModeToggle({ className }: { className?: string }) {
         onChange={(e) => setTestMode(e.target.checked)}
         className="size-4"
       />
-      <span className="font-medium">Test mode</span>
+      <span className="font-medium">Demo mode</span>
       <span className="text-muted-foreground text-xs">
-        charge ${POLYMARKET_MIN_FUNDING_USD} (enough to fund the hedge), not the full premium
+        charge ${POLYMARKET_MIN_FUNDING_USD} for testing, not the full premium
       </span>
     </label>
   );

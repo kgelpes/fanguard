@@ -1,13 +1,14 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
 import type { BlowoutCombo, FixtureResolution } from "@fanguard/polymarket";
 import { quoteCover, type CoverQuote } from "@fanguard/pricing";
 
-import { PayPremium } from "~/components/checkout/pay-premium";
 import { HedgeDesk } from "~/components/checkout/hedge-desk";
+import { PayFlow } from "~/components/checkout/pay-flow";
 import { TestModeToggle } from "~/lib/test-mode";
 
 function formatUsd(value: number): string {
@@ -114,7 +115,6 @@ function CheckoutInner() {
   }, [matchup, team, shutout]);
 
   // Derive the priced quote from the resolved combos + the current ticket price.
-  // Cheap and in-memory, so editing the price re-prices instantly.
   const quote: QuoteState = React.useMemo(() => {
     if (fixture.state === "loading") return { state: "loading" };
     if (fixture.state === "error") return { state: "error", message: fixture.message };
@@ -127,62 +127,75 @@ function CheckoutInner() {
   }, [fixture, team, ticketPrice]);
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col gap-6 px-6 py-16">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Fanguard checkout</h1>
-        <p className="text-muted-foreground text-sm">
-          Log in to spin up your embedded wallet — no seed phrase, no extension.
-        </p>
+    <main className="bg-background mx-auto flex min-h-screen w-full max-w-md flex-col gap-7 px-5 py-10">
+      <header className="flex flex-col items-center gap-3 text-center">
+        <Image
+          src="/fanguard-shield.png"
+          alt="FanGuard"
+          width={64}
+          height={64}
+          priority
+          className="h-16 w-16"
+        />
+        <div className="flex flex-col gap-0.5">
+          <h1 className="font-display text-base font-semibold tracking-tight">FanGuard</h1>
+          <p className="text-muted-foreground text-xs">Insure your night. One tap.</p>
+        </div>
       </header>
 
-      <div className="bg-card text-card-foreground rounded-xl border border-dashed p-3">
-        <TestModeToggle />
-      </div>
+      {!team ? (
+        <EmptyState />
+      ) : (
+        <>
+          <Hero
+            team={team}
+            matchup={matchup}
+            quote={quote}
+            ticketPrice={ticketPrice}
+            onTicketPrice={setTicketPrice}
+          />
 
-      {team && (
-        <FlowStepper
-          priced={quote.state === "done"}
-          paid={paid}
-          hedged={hedgePhase === "done"}
-          hedgeFailed={hedgePhase === "error"}
-        />
-      )}
+          {quote.state === "done" && (
+            <Steps
+              priced
+              paid={paid}
+              hedged={hedgePhase === "done"}
+              hedgeFailed={hedgePhase === "error"}
+            />
+          )}
 
-      {team && (
-        <CoverSummary
-          team={team}
-          matchup={matchup}
-          quote={quote}
-          ticketPrice={ticketPrice}
-          onTicketPrice={setTicketPrice}
-        />
-      )}
+          <div className="flex justify-center">
+            <DynamicWidget />
+          </div>
 
-      <div className="bg-card text-card-foreground rounded-xl border p-5">
-        <DynamicWidget />
-      </div>
+          {quote.state === "done" && (
+            <PayFlow
+              premium={quote.quote.premium}
+              team={team}
+              matchup={matchup}
+              onPaid={() => {
+                setPaid(true);
+                setHedgeTrigger((n) => n + 1);
+              }}
+            />
+          )}
 
-      {team && quote.state === "done" && (
-        <PayPremium
-          premium={quote.quote.premium}
-          team={team}
-          matchup={matchup}
-          onSettled={() => {
-            setPaid(true);
-            setHedgeTrigger((n) => n + 1);
-          }}
-        />
-      )}
-
-      {team && quote.state === "done" && (
-        <HedgeDesk
-          team={team}
-          matchup={matchup}
-          shutout={Boolean(shutout)}
-          coverageUsd={quote.quote.payout}
-          trigger={hedgeTrigger}
-          onPhase={setHedgePhase}
-        />
+          {quote.state === "done" && (
+            <footer className="mt-1 flex flex-col gap-4">
+              <HedgeDesk
+                team={team}
+                matchup={matchup}
+                shutout={Boolean(shutout)}
+                coverageUsd={quote.quote.payout}
+                trigger={hedgeTrigger}
+                onPhase={setHedgePhase}
+              />
+              <div className="flex justify-center">
+                <TestModeToggle className="justify-center" />
+              </div>
+            </footer>
+          )}
+        </>
       )}
     </main>
   );
@@ -190,67 +203,30 @@ function CheckoutInner() {
 
 type HedgePhase = "idle" | "loading" | "placing" | "done" | "error";
 
-/** Three-step demo tracker: cover priced → premium paid → hedge placed. */
-function FlowStepper({
-  priced,
-  paid,
-  hedged,
-  hedgeFailed,
-}: {
-  priced: boolean;
-  paid: boolean;
-  hedged: boolean;
-  hedgeFailed: boolean;
-}) {
-  const steps = [
-    { label: "Cover priced", done: priced },
-    { label: "Premium paid", done: paid },
-    { label: "Hedge placed", done: hedged, failed: hedgeFailed },
-  ];
-  // The active step is the first one not yet done.
-  const activeIndex = steps.findIndex((s) => !s.done);
-
+/** No deep-link context — the checkout is normally opened from a ticket. */
+function EmptyState() {
   return (
-    <ol className="bg-card text-card-foreground flex items-center gap-2 rounded-xl border p-4">
-      {steps.map((step, i) => {
-        const isActive = i === activeIndex;
-        return (
-          <React.Fragment key={step.label}>
-            <li className="flex items-center gap-2">
-              <span
-                className={
-                  "flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold " +
-                  (step.failed
-                    ? "bg-destructive text-white"
-                    : step.done
-                      ? "bg-emerald-500 text-white"
-                      : isActive
-                        ? "bg-foreground text-background"
-                        : "bg-muted text-muted-foreground")
-                }
-              >
-                {step.failed ? "!" : step.done ? "✓" : i + 1}
-              </span>
-              <span
-                className={
-                  "text-xs font-medium " +
-                  (step.done || isActive ? "text-foreground" : "text-muted-foreground")
-                }
-              >
-                {step.label}
-              </span>
-            </li>
-            {i < steps.length - 1 && (
-              <span className={"h-px flex-1 " + (step.done ? "bg-emerald-500" : "bg-border")} />
-            )}
-          </React.Fragment>
-        );
-      })}
-    </ol>
+    <div className="bg-card text-card-foreground flex flex-col items-center gap-2 rounded-xl border p-8 text-center">
+      <h2 className="font-display text-lg font-semibold">No game selected</h2>
+      <p className="text-muted-foreground text-sm text-balance">
+        Open FanGuard from your ticket at checkout to protect your night — or look up a game to start.
+      </p>
+      <a
+        href="/"
+        className="text-primary mt-1 text-sm font-medium underline-offset-4 hover:underline"
+      >
+        Look up a game
+      </a>
+    </div>
   );
 }
 
-function CoverSummary({
+/**
+ * The emotional hero: the dollars you're protecting, loss-framed and large (the
+ * Dollars-Are-The-Headline rule), with the plain-English trigger and the price
+ * you set. Probability stays hidden (see CONTEXT.md / PRODUCT.md).
+ */
+function Hero({
   team,
   matchup,
   quote,
@@ -263,61 +239,109 @@ function CoverSummary({
   ticketPrice: number | null;
   onTicketPrice: (value: number | null) => void;
 }) {
-  // Loss-framed: dollars only, probability hidden (see CONTEXT.md). We surface
-  // WHAT triggers a payout (plain-English legs) but never HOW LIKELY.
   return (
-    <div className="bg-card text-card-foreground flex flex-col gap-3 rounded-xl border p-5">
-      <div className="flex flex-col gap-1">
-        <span className="text-muted-foreground text-xs uppercase tracking-wide">
-          Protect your night
-        </span>
-        <h2 className="text-xl font-semibold">
+    <section className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5 text-center">
+        <h2 className="font-display text-3xl font-semibold tracking-tight text-balance">
           {quote.state === "done"
             ? `Protect your ${formatUsd(quote.quote.payout)} night`
             : `Cover for ${team}`}
         </h2>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-muted-foreground text-sm text-balance">
           Pays out if {team} gets blown out{matchup ? ` · ${matchup}` : ""}.
         </p>
       </div>
 
-      <TicketPriceInput value={ticketPrice} onCommit={onTicketPrice} />
-
       {quote.state === "loading" && (
-        <p className="text-muted-foreground text-sm">Pricing tonight’s cover…</p>
+        <p className="text-muted-foreground text-center text-sm">Pricing tonight’s cover…</p>
+      )}
+      {quote.state === "error" && (
+        <p className="text-destructive text-center text-sm">{quote.message}</p>
       )}
 
-      {quote.state === "error" && <p className="text-destructive text-sm">{quote.message}</p>}
-
       {quote.state === "done" && (
-        <>
-          <ul className="flex flex-col gap-1 border-t pt-3">
+        <div className="bg-card text-card-foreground flex flex-col gap-4 rounded-xl border p-5">
+          <ul className="flex flex-col gap-2">
             {quote.quote.triggerCombo?.legs.map((leg) => (
-              <li key={leg.marketSlug} className="text-muted-foreground text-sm">
-                {leg.selection}
+              <li key={leg.marketSlug} className="flex items-start gap-2.5 text-sm">
+                <span
+                  aria-hidden
+                  className="bg-primary/10 text-primary mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[10px]"
+                >
+                  ✓
+                </span>
+                <span>{leg.selection}</span>
               </li>
             ))}
           </ul>
-          <div className="flex items-center justify-between border-t pt-3">
-            <span className="text-sm font-medium">Tonight’s premium</span>
-            <span className="text-lg font-semibold tabular-nums">
-              {formatUsd(quote.quote.premium)}
-            </span>
-          </div>
-          <p className="text-muted-foreground text-xs">
-            Pay below — Dynamic Flow settles your premium in USDC on Polygon.
-          </p>
-        </>
+          <TicketPriceInput value={ticketPrice} onCommit={onTicketPrice} />
+        </div>
       )}
-    </div>
+    </section>
+  );
+}
+
+/** Slim, calm progress — three dots, brand navy. Not a heavy bordered card. */
+function Steps({
+  priced,
+  paid,
+  hedged,
+  hedgeFailed,
+}: {
+  priced: boolean;
+  paid: boolean;
+  hedged: boolean;
+  hedgeFailed: boolean;
+}) {
+  const steps = [
+    { label: "Priced", done: priced, failed: false },
+    { label: "Paid", done: paid, failed: false },
+    { label: "Secured", done: hedged, failed: hedgeFailed },
+  ];
+  const activeIndex = steps.findIndex((s) => !s.done);
+
+  return (
+    <ol className="flex items-center justify-center gap-2">
+      {steps.map((step, i) => {
+        const isActive = i === activeIndex;
+        return (
+          <React.Fragment key={step.label}>
+            <li className="flex items-center gap-1.5">
+              <span
+                className={
+                  "size-2 rounded-full transition-colors " +
+                  (step.failed
+                    ? "bg-destructive"
+                    : step.done
+                      ? "bg-primary"
+                      : isActive
+                        ? "bg-primary/40"
+                        : "bg-border")
+                }
+              />
+              <span
+                className={
+                  "text-xs " +
+                  (step.done || isActive ? "text-foreground font-medium" : "text-muted-foreground")
+                }
+              >
+                {step.label}
+              </span>
+            </li>
+            {i < steps.length - 1 && (
+              <span className={"h-px w-5 " + (step.done ? "bg-primary/40" : "bg-border")} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </ol>
   );
 }
 
 /**
  * Editable ticket price. The fan (or the extension hand-off) sets what their
  * night is worth; committing writes `?price=` to the URL, which re-prices the
- * cover and sizes the hedge. Local state keeps typing snappy — we only commit
- * on blur / Enter so we don't re-price on every keystroke.
+ * cover. Local state keeps typing snappy — we commit on blur / Enter.
  */
 function TicketPriceInput({
   value,
@@ -328,7 +352,6 @@ function TicketPriceInput({
 }) {
   const [draft, setDraft] = React.useState(value != null ? String(value) : "");
 
-  // Keep the field in sync if the URL changes from elsewhere (e.g. extension link).
   React.useEffect(() => {
     setDraft(value != null ? String(value) : "");
   }, [value]);
@@ -344,30 +367,24 @@ function TicketPriceInput({
   }
 
   return (
-    <label className="flex flex-col gap-1.5 border-t pt-3">
-      <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-        Your ticket price
-      </span>
-      <div className="flex items-center gap-2">
-        <div className="border-input bg-background focus-within:ring-ring flex h-10 flex-1 items-center rounded-md border px-3 focus-within:ring-2">
-          <span className="text-muted-foreground text-sm">$</span>
-          <input
-            inputMode="decimal"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={commit}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.currentTarget.blur();
-              }
-            }}
-            placeholder="250"
-            className="placeholder:text-muted-foreground ml-1 w-full bg-transparent text-sm outline-none"
-          />
-        </div>
+    <label className="flex flex-col gap-1.5 border-t pt-4">
+      <span className="text-muted-foreground text-xs font-medium">Your ticket price</span>
+      <div className="border-input bg-background focus-within:ring-ring flex h-10 items-center rounded-lg border px-3 focus-within:ring-2">
+        <span className="text-muted-foreground text-sm">$</span>
+        <input
+          inputMode="decimal"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+          placeholder="250"
+          className="placeholder:text-muted-foreground ml-1 w-full bg-transparent text-sm outline-none"
+        />
       </div>
       <span className="text-muted-foreground text-xs">
-        We cover your full ticket — the premium and the hedge both size to this.
+        We cover your full ticket — set it to what tonight’s worth to you.
       </span>
     </label>
   );

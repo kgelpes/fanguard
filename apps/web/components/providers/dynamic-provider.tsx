@@ -11,7 +11,7 @@ import { createConfig, WagmiProvider } from "wagmi";
 
 import { env } from "~/env";
 
-// wagmi config — Fanguard SETTLES on Polygon mainnet (137), co-located with the
+// wagmi config — FanGuard SETTLES on Polygon mainnet (137), co-located with the
 // Polymarket hedge. The fan can PAY from any of these chains, though (Dynamic
 // Flow swaps/bridges to the settlement USDC), so each must be a wagmi chain the
 // embedded wallet can switch to and sign on. Keep in sync with PAYMENT_SOURCES.

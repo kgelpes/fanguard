@@ -1,6 +1,6 @@
-# Fanguard
+# FanGuard
 
-Turborepo monorepo for Fanguard — one-tap "insure your night" blowout cover. A
+Turborepo monorepo for FanGuard — one-tap "insure your night" blowout cover. A
 Chrome/Firefox extension overlays Polymarket odds onto live-event pages, and a Next.js
 web app prices the cover and runs the `/checkout` flow: the fan logs in with a **Dynamic**
 embedded wallet (no seed phrase) and pays the premium in USDC on **Polygon mainnet**.
