@@ -83,6 +83,21 @@ export async function POST(request: Request) {
       args: [gameId],
     });
     const opened = game[0];
+    const resolved = game[1];
+    // A resolved game is final — buyPolicy would revert GameResolvedAlready.
+    // gameId is deterministic from (matchup, team), so once a game is resolved
+    // that match+team can't take new cover. Fail clearly here instead of letting
+    // the fan sign a tx that's guaranteed to revert (and burn gas).
+    if (opened && resolved) {
+      return NextResponse.json(
+        {
+          error:
+            "This match is already settled, so cover for it is closed. Pick a different match or team to insure.",
+          code: "GAME_RESOLVED",
+        },
+        { status: 409 },
+      );
+    }
     if (!opened) {
       const wallet = settlerWalletClient(account);
       try {
