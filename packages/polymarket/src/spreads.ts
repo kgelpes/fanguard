@@ -62,6 +62,7 @@ function spreadAsComboLeg(leg: SpreadLeg): ComboLeg {
     marketSlug: leg.marketSlug,
     question: leg.question,
     selection: `${leg.team} wins by more than ${leg.line}`,
+    line: leg.line,
     probability: leg.coverProbability,
     decimalOdds: leg.decimalOdds,
     tokenId: leg.coverTokenId,
@@ -69,7 +70,7 @@ function spreadAsComboLeg(leg: SpreadLeg): ComboLeg {
 }
 
 /** Build the "opponent fails to score" proxy leg from a BTTS market, if present. */
-function shutoutLeg(event: GammaEvent): ComboLeg | null {
+export function extractShutoutLeg(event: GammaEvent): ComboLeg | null {
   const market = event.markets.find(isBttsMarket);
   if (!market) return null;
   // BTTS outcomes are ["Yes", "No"]; "No" ≈ at least one team kept a clean sheet,
@@ -113,7 +114,7 @@ export function buildBlowoutCombos(
     }
   }
 
-  const shutout = options.includeShutoutLeg ? shutoutLeg(event) : null;
+  const shutout = options.includeShutoutLeg ? extractShutoutLeg(event) : null;
 
   return [...deepestByTeam.values()]
     .sort((a, b) => a.team.localeCompare(b.team))

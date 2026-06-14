@@ -263,7 +263,7 @@ export function HedgeDesk({
           {placing && (
             <ol className="text-muted-foreground flex flex-col gap-1 text-xs">
               <li>① Converting the settled premium → pUSD → deposit wallet…</li>
-              <li>② Resolving the blowout combo for {team}…</li>
+              <li>② Resolving the cover combo for {team}…</li>
               <li>③ Signing the order from the deposit wallet (POLY_1271)…</li>
               <li>④ Posting to the Polymarket CLOB…</li>
             </ol>
@@ -281,7 +281,7 @@ export function HedgeDesk({
                 <span className="tabular-nums">{result.estCostUsd.toFixed(2)}</span>).
               </p>
               <p className="text-muted-foreground text-xs">
-                {result.event.title} · this position pays out if {team} gets blown out, funding the
+                {result.event.title} · this position pays out if {team} gets crushed, funding the
                 fan’s cover.
               </p>
               {result.coverageUsd != null && result.coverageShares != null && (

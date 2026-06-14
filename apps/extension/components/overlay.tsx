@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { browser } from "wxt/browser";
+import { quoteCover } from "@fanguard/pricing";
 
 import { Button } from "~/components/ui/button";
 import type { DetectedEvent } from "~/lib/event-detection";
 import type { ResolveFixtureResponse } from "~/lib/messages";
 
-// Pricing follows the pass-through model: read the market's blowout probability
-// and mark it up modestly. The probability itself is hidden from the fan.
-const MARKUP = 1.15;
-const MIN_PREMIUM = 5;
+// Pricing follows the pass-through model (see @fanguard/pricing): read the
+// market's blowout probability and mark it up modestly, auto-stacking the
+// shutout leg when the cover would otherwise be too pricey. Probability hidden.
 const FALLBACK_PAYOUT = 250;
 
 // Where the "Add cover" hand-off opens. WXT inlines WXT_PUBLIC_* at build time.
@@ -155,9 +155,15 @@ function CoverOffer({
   }
 
   // Step 2: cover priced to MY team getting blown out — i.e. the opponent
-  // running away with it (the combo whose opponent is my team).
-  const triggerCombo = data.combos.find((c) => c.opponent === myTeam);
-  if (!triggerCombo) {
+  // running away with it. quoteCover picks the trigger combo and auto-stacks the
+  // shutout leg when the bare spread cover would be too expensive.
+  const quote = quoteCover({
+    combos: data.combos,
+    myTeam,
+    ticketPriceUsd: payout,
+    shutoutLeg: data.shutoutLeg,
+  });
+  if (!quote.triggerCombo) {
     return (
       <div className="flex flex-col gap-2">
         <p className="text-muted-foreground text-sm">
@@ -170,13 +176,12 @@ function CoverOffer({
     );
   }
 
-  const pBlowout = Math.min(0.95, triggerCombo.blowoutProbability);
-  const premium = Math.max(MIN_PREMIUM, pBlowout * payout * MARKUP);
+  const premium = quote.premium;
 
   // Hand off to the web checkout, carrying the ticket price in the URL so it
   // re-prices the cover and sizes the hedge to the fan's real night.
   function openCheckout() {
-    const params = new URLSearchParams({ q: matchup, team: myTeam!, shutout: "1" });
+    const params = new URLSearchParams({ q: matchup, team: myTeam! });
     if (ticketPriceUsd != null) params.set("price", String(Math.round(ticketPriceUsd)));
     window.open(`${WEB_APP_URL}/checkout?${params.toString()}`, "_blank", "noopener");
   }

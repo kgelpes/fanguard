@@ -19,7 +19,6 @@ const apiUrl = env.WXT_PUBLIC_API_URL?.replace(/\/$/, "");
 async function resolveViaApi(base: string, query: string): Promise<ResolveFixtureResponse> {
   const url = new URL(`${base}/api/fixtures`);
   url.searchParams.set("q", query);
-  url.searchParams.set("shutout", "1");
 
   const response = await fetch(url, { headers: { accept: "application/json" } });
   const body = (await response.json().catch(() => null)) as
@@ -46,7 +45,8 @@ export default defineBackground(() => {
       if (message?.type !== "RESOLVE_FIXTURE") return undefined;
       try {
         if (apiUrl) return await resolveViaApi(apiUrl, message.query);
-        const data = await resolveFixture(message.query, { includeShutoutLeg: true });
+        // Base combos + standalone shutout leg; pricing auto-stacks when needed.
+        const data = await resolveFixture(message.query);
         return { ok: true, data };
       } catch (error) {
         const code = (error as { code?: string })?.code;

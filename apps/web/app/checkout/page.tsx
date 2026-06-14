@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
-import type { BlowoutCombo, FixtureResolution } from "@fanguard/polymarket";
+import type { BlowoutCombo, ComboLeg, FixtureResolution } from "@fanguard/polymarket";
 import { quoteCover, type CoverQuote } from "@fanguard/pricing";
 
 import { HedgeDesk } from "~/components/checkout/hedge-desk";
@@ -17,6 +17,23 @@ function formatUsd(value: number): string {
     currency: "USD",
     maximumFractionDigits: 0,
   });
+}
+
+/**
+ * Plain-language refund condition for a combo leg, in the fan's terms — e.g.
+ * "Uruguay is beaten by 3 or more goals". A spread line of 2.5 means the
+ * favorite must win by MORE than 2.5, i.e. the fan's team loses by 3+.
+ */
+function legCondition(leg: ComboLeg, teamName: string): string {
+  if (leg.line != null) {
+    const goals = Math.floor(leg.line) + 1;
+    return `${teamName} is beaten by ${goals} or more goal${goals === 1 ? "" : "s"}`;
+  }
+  // The clean-sheet proxy leg (BTTS "No") in the fan's terms.
+  if (/both teams to score/i.test(leg.selection) || /-btts$/.test(leg.marketSlug)) {
+    return `${teamName} never scores`;
+  }
+  return leg.selection;
 }
 
 /** Parse a `?price=` value into a positive USD number, or null if absent/invalid. */
@@ -39,7 +56,7 @@ type FixtureState =
   | { state: "idle" }
   | { state: "loading" }
   | { state: "error"; message: string }
-  | { state: "done"; combos: BlowoutCombo[] };
+  | { state: "done"; combos: BlowoutCombo[]; shutoutLeg: ComboLeg | null };
 
 export default function CheckoutPage() {
   // useSearchParams must sit under a Suspense boundary for static rendering.
@@ -56,7 +73,6 @@ function CheckoutInner() {
   const searchParams = useSearchParams();
   const team = searchParams.get("team");
   const matchup = searchParams.get("q");
-  const shutout = searchParams.get("shutout");
   // Ticket price drives the payout target (and so the premium + hedge size). It
   // lives in the URL so the extension can hand it over and links stay shareable.
   const ticketPrice = parsePrice(searchParams.get("price"));
@@ -87,7 +103,6 @@ function CheckoutInner() {
     setFixture({ state: "loading" });
 
     const params = new URLSearchParams({ q: matchup });
-    if (shutout) params.set("shutout", shutout);
 
     fetch(`/api/fixtures?${params.toString()}`)
       .then(async (res) => {
@@ -98,7 +113,11 @@ function CheckoutInner() {
           return;
         }
         const resolution = body as FixtureResolution;
-        setFixture({ state: "done", combos: resolution.combos });
+        setFixture({
+          state: "done",
+          combos: resolution.combos,
+          shutoutLeg: resolution.shutoutLeg,
+        });
       })
       .catch(() => {
         if (!cancelled) {
@@ -112,14 +131,19 @@ function CheckoutInner() {
     return () => {
       cancelled = true;
     };
-  }, [matchup, team, shutout]);
+  }, [matchup, team]);
 
   // Derive the priced quote from the resolved combos + the current ticket price.
   const quote: QuoteState = React.useMemo(() => {
     if (fixture.state === "loading") return { state: "loading" };
     if (fixture.state === "error") return { state: "error", message: fixture.message };
     if (fixture.state === "idle" || !team) return { state: "idle" };
-    const q = quoteCover({ combos: fixture.combos, myTeam: team, ticketPriceUsd: ticketPrice });
+    const q = quoteCover({
+      combos: fixture.combos,
+      myTeam: team,
+      ticketPriceUsd: ticketPrice,
+      shutoutLeg: fixture.shutoutLeg,
+    });
     if (!q.triggerCombo) {
       return { state: "error", message: `No blowout line to cover ${team} on this game.` };
     }
@@ -139,7 +163,7 @@ function CheckoutInner() {
         />
         <div className="flex flex-col gap-0.5">
           <h1 className="font-display text-base font-semibold tracking-tight">FanGuard</h1>
-          <p className="text-muted-foreground text-xs">Insure your night. One tap.</p>
+          <p className="text-muted-foreground text-xs">Insure your ticket. One tap.</p>
         </div>
       </header>
 
@@ -185,7 +209,6 @@ function CheckoutInner() {
               <HedgeDesk
                 team={team}
                 matchup={matchup}
-                shutout={Boolean(shutout)}
                 coverageUsd={quote.quote.payout}
                 trigger={hedgeTrigger}
                 onPhase={setHedgePhase}
@@ -209,7 +232,7 @@ function EmptyState() {
     <div className="bg-card text-card-foreground flex flex-col items-center gap-2 rounded-xl border p-8 text-center">
       <h2 className="font-display text-lg font-semibold">No game selected</h2>
       <p className="text-muted-foreground text-sm text-balance">
-        Open FanGuard from your ticket at checkout to protect your night — or look up a game to start.
+        Open FanGuard from your ticket at checkout to protect your seat — or look up a game to start.
       </p>
       <a
         href="/"
@@ -239,21 +262,30 @@ function Hero({
   ticketPrice: number | null;
   onTicketPrice: (value: number | null) => void;
 }) {
+  // Prefer Polymarket's canonical names from the resolved combo over the raw URL
+  // params (e.g. "Uruguay" / "Saudi Arabia", not "uruguay vs saudi").
+  const trigger = quote.state === "done" ? quote.quote.triggerCombo : null;
+  const teamName = trigger?.opponent ?? team;
+  const matchupLabel = trigger ? `${trigger.opponent} vs ${trigger.team}` : matchup;
+
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5 text-center">
         <h2 className="font-display text-3xl font-semibold tracking-tight text-balance">
           {quote.state === "done"
-            ? `Protect your ${formatUsd(quote.quote.payout)} night`
-            : `Cover for ${team}`}
+            ? `Protect your ${formatUsd(quote.quote.payout)} ticket`
+            : "Protect your ticket"}
         </h2>
         <p className="text-muted-foreground text-sm text-balance">
-          Pays out if {team} gets blown out{matchup ? ` · ${matchup}` : ""}.
+          Insurance for the game you show up to — and wish you hadn’t.
         </p>
+        {matchupLabel && (
+          <p className="text-muted-foreground/70 text-xs font-medium">{matchupLabel}</p>
+        )}
       </div>
 
       {quote.state === "loading" && (
-        <p className="text-muted-foreground text-center text-sm">Pricing tonight’s cover…</p>
+        <p className="text-muted-foreground text-center text-sm">Pricing your cover…</p>
       )}
       {quote.state === "error" && (
         <p className="text-destructive text-center text-sm">{quote.message}</p>
@@ -261,19 +293,28 @@ function Hero({
 
       {quote.state === "done" && (
         <div className="bg-card text-card-foreground flex flex-col gap-4 rounded-xl border p-5">
-          <ul className="flex flex-col gap-2">
-            {quote.quote.triggerCombo?.legs.map((leg) => (
-              <li key={leg.marketSlug} className="flex items-start gap-2.5 text-sm">
-                <span
-                  aria-hidden
-                  className="bg-primary/10 text-primary mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[10px]"
-                >
-                  ✓
-                </span>
-                <span>{leg.selection}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium">
+              Your {formatUsd(quote.quote.payout)} ticket is refunded if:
+            </p>
+            <ul className="flex flex-col gap-2">
+              {quote.quote.triggerCombo?.legs.map((leg) => (
+                <li key={leg.marketSlug} className="flex items-start gap-2.5 text-sm">
+                  <span
+                    aria-hidden
+                    className="bg-primary/10 text-primary mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[10px]"
+                  >
+                    ✓
+                  </span>
+                  <span>{legCondition(leg, teamName)}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-muted-foreground text-xs text-balance">
+              A close game won’t pay out. This is for the kind where you stop watching the game
+              and start thinking about the drive home.
+            </p>
+          </div>
           <TicketPriceInput value={ticketPrice} onCommit={onTicketPrice} />
         </div>
       )}
@@ -384,7 +425,7 @@ function TicketPriceInput({
         />
       </div>
       <span className="text-muted-foreground text-xs">
-        We cover your full ticket — set it to what tonight’s worth to you.
+        We cover your full ticket — set it to what you paid.
       </span>
     </label>
   );
