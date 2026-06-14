@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/bundle-extension.mjs",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit"
