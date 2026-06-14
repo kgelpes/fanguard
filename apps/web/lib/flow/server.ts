@@ -246,16 +246,43 @@ export async function notifyBroadcast(
   sessionToken: string,
   txHash: string,
 ): Promise<FlowTransaction> {
-  return flowFetch(`/sdk/${environmentId()}/transactions/${transactionId}/broadcast`, {
-    method: "POST",
-    headers: { "x-dynamic-checkout-session-token": sessionToken },
-    body: { txHash },
-  });
+  const raw = await flowFetch<Record<string, unknown>>(
+    `/sdk/${environmentId()}/transactions/${transactionId}/broadcast`,
+    {
+      method: "POST",
+      headers: { "x-dynamic-checkout-session-token": sessionToken },
+      body: { txHash },
+    },
+  );
+  return normalizeFlowTransaction(raw);
 }
 
 // ── Step 8: Poll status (no auth) ───────────────────────────────────────────
 export async function getStatus(transactionId: string): Promise<FlowTransaction> {
-  return flowFetch(`/sdk/${environmentId()}/transactions/${transactionId}`, { method: "GET" });
+  const raw = await flowFetch<Record<string, unknown>>(
+    `/sdk/${environmentId()}/transactions/${transactionId}`,
+    { method: "GET" },
+  );
+  return normalizeFlowTransaction(raw);
+}
+
+/**
+ * Dynamic is collapsing the old CheckoutTransaction into a unified `flow`
+ * resource, and some responses now nest the state under a `flow` object
+ * (`flow.executionState` / `flow.settlementState`) rather than at the top level.
+ * Read from whichever shape is present so the poller sees the real state instead
+ * of `undefined` (which serialized to `{}` and looked like a stuck settlement).
+ */
+function normalizeFlowTransaction(raw: unknown): FlowTransaction {
+  const body = (raw ?? {}) as Record<string, unknown>;
+  const nested =
+    body.flow && typeof body.flow === "object" ? (body.flow as Record<string, unknown>) : null;
+  const tx = (nested ?? body) as unknown as FlowTransaction;
+  if (typeof tx.settlementState !== "string" || typeof tx.executionState !== "string") {
+    // Shape we don't recognize — log the raw payload so we can see what Flow sent.
+    console.error("[flow] unexpected status shape", JSON.stringify(raw));
+  }
+  return tx;
 }
 
 /** Cancel a transaction (e.g. the fan rejected the signature in their wallet). */
